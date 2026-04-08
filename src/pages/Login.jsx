@@ -99,23 +99,6 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 p-3 bg-white/5 rounded-xl">
-            <p className="text-xs text-white/60 text-center mb-2">
-              Demo Credentials:
-            </p>
-            <div className="text-xs text-white/50 space-y-0.5">
-              <p>
-                <span className="text-accent">admin</span> / admin123 (Admin)
-              </p>
-              <p>
-                <span className="text-accent">management</span> / mgmt123
-                (Management)
-              </p>
-              <p>
-                <span className="text-accent">staff</span> / staff123 (Staff)
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
