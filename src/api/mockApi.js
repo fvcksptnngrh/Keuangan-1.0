@@ -120,6 +120,17 @@ export const mockUploadArsipApi = (kategori, formData) => {
   return withDelay(newDoc)
 }
 
+export const mockEditArsipApi = (id, data) => {
+  for (const kategori of Object.keys(mockArsip)) {
+    const doc = mockArsip[kategori].find((d) => d.id === id)
+    if (doc) {
+      Object.assign(doc, data)
+      return withDelay(doc)
+    }
+  }
+  return Promise.reject({ response: { status: 404 } })
+}
+
 export const mockDeleteArsipApi = (id) => {
   for (const kategori of Object.keys(mockArsip)) {
     mockArsip[kategori] = mockArsip[kategori].filter((d) => d.id !== id)

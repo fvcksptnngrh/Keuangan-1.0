@@ -9,6 +9,8 @@ import ArsipUmum from '../pages/arsip/ArsipUmum'
 import KatalogBarang from '../pages/katalog/KatalogBarang'
 import ManajemenAkun from '../pages/admin/ManajemenAkun'
 import ManajemenInventaris from '../pages/admin/ManajemenInventaris'
+import LogAktivitas from '../pages/admin/LogAktivitas'
+import RiwayatPeminjaman from '../pages/inventaris/RiwayatPeminjaman'
 import NotFound from '../pages/errors/NotFound'
 import ServerError from '../pages/errors/ServerError'
 import Forbidden from '../pages/errors/Forbidden'
@@ -37,6 +39,7 @@ const AppRouter = () => {
 
           {/* Inventaris */}
           <Route path="/inventaris/katalog" element={<KatalogBarang />} />
+          <Route path="/inventaris/peminjaman" element={<RiwayatPeminjaman />} />
 
           {/* Admin */}
           <Route
@@ -52,6 +55,14 @@ const AppRouter = () => {
             element={
               <ProtectedRoute feature="admin">
                 <ManajemenInventaris />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/log"
+            element={
+              <ProtectedRoute feature="log">
+                <LogAktivitas />
               </ProtectedRoute>
             }
           />

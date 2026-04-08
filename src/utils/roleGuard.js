@@ -1,6 +1,6 @@
 const ROLE_PERMISSIONS = {
-  admin: ['dashboard', 'arsip', 'inventaris', 'admin'],
-  management: ['dashboard', 'arsip', 'inventaris'],
+  admin: ['dashboard', 'arsip', 'arsip.crud', 'arsip.download', 'inventaris', 'admin', 'log'],
+  management: ['dashboard', 'arsip', 'arsip.crud', 'arsip.download', 'inventaris'],
   staff: ['dashboard', 'arsip', 'inventaris'],
 }
 

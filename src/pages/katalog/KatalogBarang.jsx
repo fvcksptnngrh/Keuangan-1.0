@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchInventarisThunk, pinjamInventarisThunk } from '../../features/inventaris/inventarisThunks'
+import { addPeminjaman } from '../../features/peminjaman/peminjamanSlice'
+import { addLog } from '../../features/log/logSlice'
+import { useAuth } from '../../hooks/useAuth'
 import SearchBar from '../../components/common/SearchBar'
 import Modal from '../../components/common/Modal'
 import { Package } from 'lucide-react'
 
 const KatalogBarang = () => {
   const dispatch = useDispatch()
+  const { user } = useAuth()
   const { items, isLoading } = useSelector((state) => state.inventaris)
   const [search, setSearch] = useState('')
   const [selectedItem, setSelectedItem] = useState(null)
@@ -30,6 +34,21 @@ const KatalogBarang = () => {
     if (!selectedItem || selectedItem.stok <= 0) return
     setBorrowing(true)
     await dispatch(pinjamInventarisThunk(selectedItem.id))
+    dispatch(
+      addPeminjaman({
+        peminjam: user?.nama || 'User',
+        namaBarang: selectedItem.nama,
+        barangId: selectedItem.id,
+      })
+    )
+    dispatch(
+      addLog({
+        userId: user?.id,
+        nama: user?.nama || 'User',
+        aksi: 'Peminjaman',
+        target: selectedItem.nama,
+      })
+    )
     setBorrowing(false)
     setShowModal(false)
     setSelectedItem(null)

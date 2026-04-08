@@ -6,6 +6,7 @@ export const uploadArsipApi = (kategori, formData) =>
   api.post(`/arsip/${kategori}`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+export const editArsipApi = (id, data) => api.put(`/arsip/${id}`, data)
 export const deleteArsipApi = (id) => api.delete(`/arsip/${id}`)
 export const downloadArsipApi = (id) =>
   api.get(`/arsip/${id}/download`, { responseType: 'blob' })

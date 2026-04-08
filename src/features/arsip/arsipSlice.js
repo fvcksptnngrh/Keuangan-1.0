@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 import {
   fetchArsipThunk,
   uploadArsipThunk,
+  editArsipThunk,
   deleteArsipThunk,
   downloadArsipThunk,
 } from './arsipThunks'
@@ -49,6 +50,12 @@ const arsipSlice = createSlice({
         const kategori = action.meta.arg.kategori
         state.dokumenByKategori[kategori].unshift(action.payload)
         state.pagination.total += 1
+      })
+      .addCase(editArsipThunk.fulfilled, (state, action) => {
+        const { kategori, ...doc } = action.payload
+        const list = state.dokumenByKategori[kategori]
+        const idx = list.findIndex((d) => d.id === doc.id)
+        if (idx !== -1) list[idx] = { ...list[idx], ...doc }
       })
       .addCase(deleteArsipThunk.fulfilled, (state, action) => {
         const { id, kategori } = action.payload

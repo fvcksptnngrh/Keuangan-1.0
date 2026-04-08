@@ -13,6 +13,8 @@ import storage from 'redux-persist/lib/storage'
 import authReducer from '../features/auth/authSlice'
 import inventarisReducer from '../features/inventaris/inventarisSlice'
 import arsipReducer from '../features/arsip/arsipSlice'
+import logReducer from '../features/log/logSlice'
+import peminjamanReducer from '../features/peminjaman/peminjamanSlice'
 
 const authPersistConfig = {
   key: 'auth',
@@ -25,6 +27,8 @@ export const store = configureStore({
     auth: persistReducer(authPersistConfig, authReducer),
     inventaris: inventarisReducer,
     arsip: arsipReducer,
+    log: logReducer,
+    peminjaman: peminjamanReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

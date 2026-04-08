@@ -9,8 +9,10 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
+import { canAccess } from '../../utils/roleGuard'
 import { logoutThunk } from '../../features/auth/authThunks'
 import Avatar from '../common/Avatar'
 
@@ -32,7 +34,10 @@ const menuItems = [
     icon: Package,
     feature: 'inventaris',
     key: 'inventaris',
-    children: [{ label: 'Katalog Barang', path: '/inventaris/katalog' }],
+    children: [
+      { label: 'Katalog Barang', path: '/inventaris/katalog' },
+      { label: 'Riwayat Peminjaman', path: '/inventaris/peminjaman' },
+    ],
   },
   { label: 'Manajemen Akun', icon: Users, path: '/admin/akun', feature: 'admin' },
   {
@@ -40,6 +45,12 @@ const menuItems = [
     icon: Settings,
     path: '/admin/inventaris',
     feature: 'admin',
+  },
+  {
+    label: 'Log Aktivitas',
+    icon: ClipboardList,
+    path: '/admin/log',
+    feature: 'log',
   },
 ]
 
@@ -84,7 +95,7 @@ const AccordionChildren = ({ isExpanded, children }) => {
 }
 
 const Sidebar = () => {
-  const { user, isAdmin } = useAuth()
+  const { user, role, isAdmin } = useAuth()
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const location = useLocation()
@@ -104,7 +115,7 @@ const Sidebar = () => {
   }
 
   const visibleMenus = menuItems.filter((item) => {
-    if (item.feature === 'admin' && !isAdmin) return false
+    if (item.feature && !canAccess(role, item.feature)) return false
     return true
   })
 

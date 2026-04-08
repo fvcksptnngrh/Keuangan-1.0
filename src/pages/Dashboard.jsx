@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useAuth } from '../hooks/useAuth'
 import { fetchInventarisThunk } from '../features/inventaris/inventarisThunks'
 import { fetchArsipThunk } from '../features/arsip/arsipThunks'
-import { aktivitasTerakhir } from '../utils/mockData'
 import DonutChart from '../components/common/DonutChart'
 import Avatar from '../components/common/Avatar'
 
@@ -12,6 +11,7 @@ const Dashboard = () => {
   const { user } = useAuth()
   const { items: inventarisItems } = useSelector((state) => state.inventaris)
   const { dokumenByKategori } = useSelector((state) => state.arsip)
+  const logs = useSelector((state) => state.log.logs)
 
   useEffect(() => {
     dispatch(fetchInventarisThunk())
@@ -81,7 +81,7 @@ const Dashboard = () => {
       <div className="rounded-2xl bg-white p-6 shadow-sm mb-6">
         <h2 className="text-lg font-bold text-darkest mb-3">Aktivitas Terakhir</h2>
         <div className="border-t border-gray-200 pt-3 space-y-3 max-h-[200px] overflow-y-auto">
-          {aktivitasTerakhir.map((act) => (
+          {logs.slice(0, 10).map((act) => (
             <div key={act.id} className="flex items-start gap-3">
               <Avatar size={32} nama={act.nama} className="flex-shrink-0 mt-0.5" />
               <div className="min-w-0">

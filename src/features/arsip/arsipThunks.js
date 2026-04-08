@@ -1,8 +1,9 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { getArsipApi, uploadArsipApi, deleteArsipApi, downloadArsipApi } from '../../api/arsipApi'
+import { getArsipApi, uploadArsipApi, editArsipApi, deleteArsipApi, downloadArsipApi } from '../../api/arsipApi'
 import {
   mockGetArsipApi,
   mockUploadArsipApi,
+  mockEditArsipApi,
   mockDeleteArsipApi,
   mockDownloadArsipApi,
 } from '../../api/mockApi'
@@ -35,6 +36,21 @@ export const uploadArsipThunk = createAsyncThunk(
       return response.data
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Gagal mengunggah arsip')
+    }
+  }
+)
+
+export const editArsipThunk = createAsyncThunk(
+  'arsip/edit',
+  async ({ id, kategori, data }, { rejectWithValue }) => {
+    try {
+      const api = useMock
+        ? () => mockEditArsipApi(id, data)
+        : () => editArsipApi(id, data)
+      const response = await api()
+      return { ...response.data, kategori }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Gagal mengedit arsip')
     }
   }
 )
