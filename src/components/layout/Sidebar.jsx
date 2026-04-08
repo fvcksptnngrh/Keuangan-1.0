@@ -1,0 +1,209 @@
+import { useState, useEffect, useRef } from 'react'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
+import {
+  Home,
+  FolderOpen,
+  Package,
+  Users,
+  Settings,
+  LogOut,
+  ChevronRight,
+} from 'lucide-react'
+import { useAuth } from '../../hooks/useAuth'
+import { logoutThunk } from '../../features/auth/authThunks'
+import Avatar from '../common/Avatar'
+
+const menuItems = [
+  { label: 'Dashboard', icon: Home, path: '/dashboard', feature: 'dashboard' },
+  {
+    label: 'Arsip Dokumen',
+    icon: FolderOpen,
+    feature: 'arsip',
+    key: 'arsip',
+    children: [
+      { label: 'Kepegawaian', path: '/arsip/kepegawaian' },
+      { label: 'Keuangan', path: '/arsip/keuangan' },
+      { label: 'Umum', path: '/arsip/umum' },
+    ],
+  },
+  {
+    label: 'Inventaris Persediaan',
+    icon: Package,
+    feature: 'inventaris',
+    key: 'inventaris',
+    children: [{ label: 'Katalog Barang', path: '/inventaris/katalog' }],
+  },
+  { label: 'Manajemen Akun', icon: Users, path: '/admin/akun', feature: 'admin' },
+  {
+    label: 'Manajemen Inventaris',
+    icon: Settings,
+    path: '/admin/inventaris',
+    feature: 'admin',
+  },
+]
+
+const getInitialOpenMenu = (pathname) => {
+  for (const item of menuItems) {
+    if (item.children?.some((child) => pathname.startsWith(child.path))) {
+      return item.key
+    }
+  }
+  return null
+}
+
+const AccordionChildren = ({ isExpanded, children }) => {
+  const [overflow, setOverflow] = useState(isExpanded ? 'visible' : 'hidden')
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setOverflow('hidden')
+    }
+  }, [isExpanded])
+
+  const handleTransitionEnd = () => {
+    if (isExpanded) {
+      setOverflow('visible')
+    }
+  }
+
+  return (
+    <div
+      ref={ref}
+      onTransitionEnd={handleTransitionEnd}
+      style={{
+        maxHeight: isExpanded ? '200px' : '0px',
+        overflow,
+        transition: 'max-height 300ms ease',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+const Sidebar = () => {
+  const { user, isAdmin } = useAuth()
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [openMenu, setOpenMenu] = useState(() => getInitialOpenMenu(location.pathname))
+
+  useEffect(() => {
+    const active = getInitialOpenMenu(location.pathname)
+    if (active) setOpenMenu(active)
+  }, [location.pathname])
+
+  const toggleMenu = (key) => {
+    setOpenMenu((prev) => (prev === key ? null : key))
+  }
+
+  const handleLogout = () => {
+    dispatch(logoutThunk()).then(() => navigate('/login'))
+  }
+
+  const visibleMenus = menuItems.filter((item) => {
+    if (item.feature === 'admin' && !isAdmin) return false
+    return true
+  })
+
+  return (
+    <aside
+      className="fixed left-0 top-0 h-screen w-[260px] flex flex-col z-40"
+      style={{ background: 'linear-gradient(180deg, #00325A 0%, #2E5575 100%)' }}
+    >
+      {/* User Info */}
+      <div className="flex flex-col items-center pt-8 pb-4 px-6">
+        <Avatar size={80} nama={user?.nama} borderColor="#7DA0CA" />
+        <h3 className="mt-3 font-bold text-white text-base">
+          {user?.nama || 'User'}
+        </h3>
+        <p className="text-cardLight text-xs mt-0.5">
+          NIP: {user?.nip || '-'}
+        </p>
+      </div>
+
+      <div className="mx-6 border-t border-white/15" />
+
+      {/* Menu */}
+      <nav className="flex-1 overflow-y-auto overflow-x-visible pl-4 pr-0 py-4 space-y-1">
+        {visibleMenus.map((item) => {
+          const Icon = item.icon
+          const hasChildren = item.children?.length > 0
+          const isExpanded = openMenu === item.key
+
+          if (hasChildren) {
+            return (
+              <div key={item.label}>
+                <button
+                  onClick={() => toggleMenu(item.key)}
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 mr-4 rounded-xl transition-colors ${
+                    isExpanded
+                      ? 'bg-white/10 text-white font-bold'
+                      : 'text-white/80 hover:bg-white/10'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="flex-1 text-left text-sm font-medium">
+                    {item.label}
+                  </span>
+                  <ChevronRight
+                    size={16}
+                    className="transition-transform duration-200"
+                    style={{
+                      transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                    }}
+                  />
+                </button>
+                <AccordionChildren isExpanded={isExpanded}>
+                  {item.children.map((child) => (
+                    <NavLink
+                      key={child.path}
+                      to={child.path}
+                      className={({ isActive }) =>
+                        isActive
+                          ? 'sidebar-tab-active block pl-12 pr-4 py-2.5 text-sm text-darkest font-bold relative'
+                          : 'block pl-12 pr-4 py-2 mr-4 rounded-xl text-sm text-white/60 hover:bg-white/10 hover:text-white transition-colors'
+                      }
+                    >
+                      {child.label}
+                    </NavLink>
+                  ))}
+                </AccordionChildren>
+              </div>
+            )
+          }
+
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                isActive
+                  ? 'sidebar-tab-active flex items-center gap-3 px-4 py-3 text-darkest font-bold relative'
+                  : 'flex items-center gap-3 px-4 py-2.5 mr-4 rounded-xl text-white/80 hover:bg-white/10 transition-colors'
+              }
+            >
+              <Icon size={20} />
+              <span className="text-sm font-medium">{item.label}</span>
+            </NavLink>
+          )
+        })}
+      </nav>
+
+      {/* Logout */}
+      <div className="pl-4 pr-4 pb-6">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-colors"
+        >
+          <LogOut size={20} />
+          <span className="text-sm font-medium">Logout</span>
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+export default Sidebar

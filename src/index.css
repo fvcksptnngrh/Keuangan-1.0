@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #C9D6E4;
+  color: #021024;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(5, 38, 89, 0.3);
+  border-radius: 3px;
+}
+
+/* ── Connected tab: active sidebar item ───────────────────── */
+.sidebar-tab-active {
+  background-color: #C9D6E4;
+  border-radius: 1rem 0 0 1rem;
+  z-index: 10;
+}
+
+.sidebar-tab-active::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -16px;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border-bottom-right-radius: 16px;
+  box-shadow: 5px 5px 0 5px #C9D6E4;
+  pointer-events: none;
+}
+
+.sidebar-tab-active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -16px;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border-top-right-radius: 16px;
+  box-shadow: 5px -5px 0 5px #C9D6E4;
+  pointer-events: none;
+}
