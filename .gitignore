@@ -9,3 +9,5 @@ npm-debug.log*
 Thumbs.db
 .vite
 .claude
+.env.example
+.gitignore

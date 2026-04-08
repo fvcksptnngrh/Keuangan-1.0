@@ -38,9 +38,9 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-[420px]">
-        <h1 className="text-center text-3xl font-bold text-[#00325A] mb-8">
-          Dashboard Keuangan
-        </h1>
+        <div className="flex justify-center mb-8">
+          <img src="/logo-login.png" alt="Logo" className="h-35 object-contain" />
+        </div>
 
         <div className="rounded-2xl p-10 shadow-xl" style={{ backgroundColor: '#00325A' }}>
           <h2 className="text-xl font-bold text-white text-center mb-6">
