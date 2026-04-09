@@ -17,7 +17,7 @@ const Modal = ({ isOpen, onClose, children, title, maxWidth = 'max-w-lg' }) => {
   if (!isOpen) return null
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center pl-[260px]">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center lg:pl-[260px]">
       <div
         className="absolute inset-0 bg-darkest/60 backdrop-blur-sm"
         onClick={onClose}

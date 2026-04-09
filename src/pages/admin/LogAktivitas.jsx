@@ -21,9 +21,9 @@ const LogAktivitas = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-darkest">Log Aktivitas</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-darkest">Log Aktivitas</h1>
           <p className="text-sm text-cardLight mt-1">
             Riwayat aktivitas pengguna sistem
           </p>
@@ -41,13 +41,13 @@ const LogAktivitas = () => {
               setPage(1)
             }}
             placeholder="Cari aktivitas..."
-            className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-cardMid/30"
+            className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-sm w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-cardMid/30"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm min-w-[540px]">
           <thead>
             <tr className="bg-sidebar text-white text-left">
               <th className="px-5 py-3 font-semibold">Pengguna</th>

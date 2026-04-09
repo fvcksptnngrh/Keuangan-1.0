@@ -199,41 +199,43 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-darkest">{judul}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-darkest">{judul}</h1>
       <p className="text-sm text-cardLight mt-1 mb-6">{subjudul}</p>
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 mb-4">
           {canCrud && (
             <button
               onClick={() => setShowUploadModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-sidebar hover:bg-darkest rounded-full text-white text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sidebar hover:bg-darkest rounded-full text-white text-sm font-medium transition-colors"
             >
               <Plus size={16} />
               Unggah
             </button>
           )}
 
-          <div className="flex items-center gap-2 ml-auto">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-cardLight/30 rounded-full text-xs text-darkest focus:outline-none focus:border-cardMid"
-            />
-            <span className="text-cardLight text-xs">-</span>
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-cardLight/30 rounded-full text-xs text-darkest focus:outline-none focus:border-cardMid"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto">
+            <div className="flex items-center gap-2">
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-white border border-cardLight/30 rounded-full text-xs text-darkest focus:outline-none focus:border-cardMid"
+              />
+              <span className="text-cardLight text-xs">-</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="flex-1 sm:flex-none px-3 py-1.5 bg-white border border-cardLight/30 rounded-full text-xs text-darkest focus:outline-none focus:border-cardMid"
+              />
+            </div>
             <SearchBar
               value={search}
               onChange={setSearch}
               placeholder="Cari dokumen..."
-              className="w-52"
+              className="w-full sm:w-52"
             />
           </div>
         </div>

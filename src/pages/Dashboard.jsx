@@ -48,7 +48,7 @@ const Dashboard = () => {
 
   return (
     <div>
-      <h1 className="text-4xl font-bold text-darkest mb-1">Dashboard Keuangan</h1>
+      <h1 className="text-2xl sm:text-4xl font-bold text-darkest mb-1">Dashboard Keuangan</h1>
       <p className="text-sm text-cardLight mb-8">
         Selamat datang, {user?.nama || 'User'}
       </p>

@@ -110,15 +110,15 @@ const ManajemenAkun = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-darkest">Manajemen Akun</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-darkest">Manajemen Akun</h1>
       <p className="text-sm text-cardLight mt-1 mb-6">Kelola akun pengguna sistem</p>
 
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h2 className="text-lg font-bold text-darkest">Daftar User</h2>
           <button
             onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2 bg-sidebar hover:bg-darkest rounded-full text-white text-sm font-medium transition-colors"
+            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-sidebar hover:bg-darkest rounded-full text-white text-sm font-medium transition-colors"
           >
             <Plus size={16} />
             Tambah Akun

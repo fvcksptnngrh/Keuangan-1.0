@@ -20,12 +20,24 @@ const peminjamanSlice = createSlice({
     returnPeminjaman(state, action) {
       const record = state.records.find((r) => r.id === action.payload)
       if (record) {
+        record.status = 'Menunggu Persetujuan'
+      }
+    },
+    approveReturn(state, action) {
+      const record = state.records.find((r) => r.id === action.payload)
+      if (record && record.status === 'Menunggu Persetujuan') {
         record.status = 'Dikembalikan'
         record.tanggalKembali = new Date().toISOString().split('T')[0]
+      }
+    },
+    rejectReturn(state, action) {
+      const record = state.records.find((r) => r.id === action.payload)
+      if (record && record.status === 'Menunggu Persetujuan') {
+        record.status = 'Dipinjam'
       }
     },
   },
 })
 
-export const { addPeminjaman, returnPeminjaman } = peminjamanSlice.actions
+export const { addPeminjaman, returnPeminjaman, approveReturn, rejectReturn } = peminjamanSlice.actions
 export default peminjamanSlice.reducer

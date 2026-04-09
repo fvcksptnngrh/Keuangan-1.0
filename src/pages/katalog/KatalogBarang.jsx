@@ -56,16 +56,16 @@ const KatalogBarang = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-darkest">Katalog Barang</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-darkest">Katalog Barang</h1>
           <p className="text-sm text-cardLight mt-1">Inventaris Persediaan Kantor</p>
         </div>
         <SearchBar
           value={search}
           onChange={setSearch}
           placeholder="Cari barang..."
-          className="w-64"
+          className="w-full sm:w-64"
         />
       </div>
 
