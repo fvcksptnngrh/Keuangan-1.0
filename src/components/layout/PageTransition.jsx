@@ -4,8 +4,12 @@ import { useLocation } from 'react-router-dom'
 const PageTransition = ({ children }) => {
   const location = useLocation()
   const [displayChildren, setDisplayChildren] = useState(children)
-  const [stage, setStage] = useState('enter') // 'enter' | 'exit'
+  const [stage, setStage] = useState('enter')
   const prevPath = useRef(location.pathname)
+  const childrenRef = useRef(children)
+
+  // Always keep the latest children in a ref
+  childrenRef.current = children
 
   useEffect(() => {
     if (location.pathname !== prevPath.current) {
@@ -13,7 +17,7 @@ const PageTransition = ({ children }) => {
       setStage('exit')
 
       const timeout = setTimeout(() => {
-        setDisplayChildren(children)
+        setDisplayChildren(childrenRef.current)
         setStage('enter')
       }, 200)
 
@@ -21,7 +25,7 @@ const PageTransition = ({ children }) => {
     } else {
       setDisplayChildren(children)
     }
-  }, [location.pathname, children])
+  }, [location.pathname]) // only re-run on actual route changes
 
   return (
     <div
