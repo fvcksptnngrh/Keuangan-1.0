@@ -1,16 +1,24 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { User, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { User, Lock, Eye, EyeOff, Loader2, UserPlus, BadgeCheck } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { loginThunk } from '../features/auth/authThunks'
 import { clearError } from '../features/auth/authSlice'
 
 const Login = () => {
+  const [mode, setMode] = useState('login') // 'login' | 'register'
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [validationError, setValidationError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+
+  // Register-only fields
+  const [nama, setNama] = useState('')
+  const [nip, setNip] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { isAuthenticated, isLoading, error } = useAuth()
@@ -19,10 +27,22 @@ const Login = () => {
     return <Navigate to="/dashboard" replace />
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const resetFields = () => {
     setValidationError('')
+    setSuccessMessage('')
     dispatch(clearError())
+  }
+
+  const switchMode = (next) => {
+    setMode(next)
+    resetFields()
+    setPassword('')
+    setConfirmPassword('')
+  }
+
+  const handleLogin = async (e) => {
+    e.preventDefault()
+    resetFields()
 
     if (!username.trim() || !password.trim()) {
       setValidationError('Username dan password tidak boleh kosong')
@@ -35,19 +55,93 @@ const Login = () => {
     }
   }
 
+  const handleRegister = async (e) => {
+    e.preventDefault()
+    resetFields()
+
+    if (!nama.trim() || !username.trim() || !password.trim() || !nip.trim()) {
+      setValidationError('Semua field wajib diisi')
+      return
+    }
+    if (password.length < 6) {
+      setValidationError('Password minimal 6 karakter')
+      return
+    }
+    if (password !== confirmPassword) {
+      setValidationError('Konfirmasi password tidak cocok')
+      return
+    }
+
+    // Mock register — in real app this would POST to an API
+    setSuccessMessage('Pendaftaran berhasil! Silakan login.')
+    setTimeout(() => {
+      setMode('login')
+      setPassword('')
+      setConfirmPassword('')
+      setNama('')
+      setNip('')
+      setSuccessMessage('')
+    }, 1500)
+  }
+
+  const isRegister = mode === 'register'
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
-      <div className="w-full max-w-[420px]">
-        <div className="flex justify-center mb-8">
-          <img src="/logo-login.png" alt="Logo" className="h-35 object-contain" />
+      <div className="w-full max-w-[460px]">
+        <div className="flex justify-center mb-6">
+          <img src="/logo-login.png" alt="Logo" className="h-45 object-contain" />
         </div>
 
-        <div className="rounded-2xl p-10 shadow-xl" style={{ backgroundColor: '#00325A' }}>
-          <h2 className="text-xl font-bold text-white text-center mb-6">
-            Masuk ke Akun Anda
+        <div
+          className="rounded-2xl px-8 sm:px-10 py-12 shadow-xl min-h-[0px] flex flex-col"
+          style={{ backgroundColor: '#00325A' }}
+        >
+          <h2 className="text-2xl font-bold text-white text-center mb-2">
+            {isRegister ? 'Buat Akun Baru' : 'Masuk ke Akun Anda'}
           </h2>
+          <p className="text-center text-white/60 text-sm mb-8">
+            {isRegister
+              ? 'Isi data diri untuk mendaftar'
+              : 'Silakan masukkan kredensial Anda'}
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={isRegister ? handleRegister : handleLogin}
+            className="space-y-4 flex-1 flex flex-col"
+          >
+            {isRegister && (
+              <div className="relative">
+                <UserPlus
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-cardLight"
+                />
+                <input
+                  type="text"
+                  placeholder="Nama Lengkap"
+                  value={nama}
+                  onChange={(e) => setNama(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            )}
+
+            {isRegister && (
+              <div className="relative">
+                <BadgeCheck
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-cardLight"
+                />
+                <input
+                  type="text"
+                  placeholder="NIP"
+                  value={nip}
+                  onChange={(e) => setNip(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            )}
+
             <div className="relative">
               <User
                 size={18}
@@ -83,11 +177,32 @@ const Login = () => {
               </button>
             </div>
 
+            {isRegister && (
+              <div className="relative">
+                <Lock
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-cardLight"
+                />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Konfirmasi Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            )}
+
             {(validationError || error) && (
               <p className="text-red-400 text-sm text-center">
                 {validationError || error}
               </p>
             )}
+            {successMessage && (
+              <p className="text-green-400 text-sm text-center">{successMessage}</p>
+            )}
+
+            <div className="flex-1" />
 
             <button
               type="submit"
@@ -95,10 +210,24 @@ const Login = () => {
               className="w-full py-3 bg-cardMid hover:bg-cardLight text-white font-bold rounded-xl transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading && <Loader2 size={18} className="animate-spin" />}
-              {isLoading ? 'Memproses...' : 'Login'}
+              {isLoading
+                ? 'Memproses...'
+                : isRegister
+                ? 'Daftar'
+                : 'Login'}
             </button>
-          </form>
 
+            <p className="text-center text-sm text-white/60">
+              {isRegister ? 'Sudah punya akun?' : 'Belum punya akun?'}{' '}
+              <button
+                type="button"
+                onClick={() => switchMode(isRegister ? 'login' : 'register')}
+                className="text-accent font-semibold hover:underline"
+              >
+                {isRegister ? 'Login' : 'Daftar'}
+              </button>
+            </p>
+          </form>
         </div>
       </div>
     </div>
