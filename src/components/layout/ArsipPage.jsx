@@ -8,7 +8,27 @@ import Table from '../common/Table'
 import Pagination from '../common/Pagination'
 import SearchBar from '../common/SearchBar'
 import Modal from '../common/Modal'
-import { Plus, FileText, Download, Trash2, Pencil, Eye, Loader2 } from 'lucide-react'
+import { Plus, FileText, Download, Trash2, Pencil, Eye, Loader2, UploadCloud, X, ChevronDown } from 'lucide-react'
+
+const KATEGORI_OPTIONS = {
+  kepegawaian: [
+    'Absensi Apel',
+    'Surat Cuti dan Izin Pegawai',
+    'Surat Perintah dan Perjadin',
+    'Jurnal Harian',
+    'Nota Dinas',
+    'Kenaikan Gaji Berkala',
+    'Sasaran Kinerja Pegawai (SKP)',
+    'SK',
+    'Draft dan Form',
+  ],
+  keuangan: [
+    'Belanja Barang',
+    'Belanja Modal',
+    'Belanja Pegawai',
+  ],
+  umum: [],
+}
 
 const ArsipPage = ({ kategori, judul, subjudul }) => {
   const dispatch = useDispatch()
@@ -32,6 +52,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewName, setPreviewName] = useState('')
+  const [isDragging, setIsDragging] = useState(false)
   const [formData, setFormData] = useState({
     nama: '',
     noDokumen: '',
@@ -300,17 +321,81 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           </div>
           <div>
             <label className="block text-sm text-darkest/70 mb-1">Kategori</label>
-            <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" placeholder="Contoh: belanja barang, pendidikan, dll." />
+            {(KATEGORI_OPTIONS[kategori] || []).length > 0 ? (
+              <div className="relative">
+                <select required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20 appearance-none cursor-pointer pr-9">
+                  <option value="" className="text-cardLight">-- Pilih Kategori --</option>
+                  {KATEGORI_OPTIONS[kategori].map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-cardLight pointer-events-none" />
+              </div>
+            ) : (
+              <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20" placeholder="Masukkan kategori" />
+            )}
           </div>
           <div>
-            <label className="block text-sm text-darkest/70 mb-1">Division</label>
-            <input type="text" readOnly value={kategori} className="w-full px-3 py-2 bg-gray-100 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
+            <label className="block text-sm text-darkest/70 mb-1">Divisi</label>
+            <input type="text" readOnly value={kategori} className="w-full px-3 py-2.5 bg-gray-50 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
           </div>
           <div>
             <label className="block text-sm text-darkest/70 mb-1">Upload File</label>
-            <div className="border-2 border-dashed border-cardLight/40 rounded-xl p-4 text-center hover:border-cardMid transition-colors">
-              <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })} className="w-full text-sm text-darkest file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:bg-sidebar file:text-white file:cursor-pointer" />
-              {formData.file && <p className="text-xs text-cardMid mt-2">{formData.file.name}</p>}
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragging(false)
+                const file = e.dataTransfer.files[0]
+                if (file) setFormData({ ...formData, file })
+              }}
+              className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer ${
+                isDragging
+                  ? 'border-sidebar bg-sidebar/5 scale-[1.01]'
+                  : formData.file
+                    ? 'border-sidebar/40 bg-sidebar/5'
+                    : 'border-cardLight/40 hover:border-cardMid hover:bg-gray-50'
+              }`}
+              onClick={() => document.getElementById('file-upload')?.click()}
+            >
+              <input
+                id="file-upload"
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                onChange={(e) => setFormData({ ...formData, file: e.target.files[0] })}
+                className="hidden"
+              />
+              {formData.file ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-sidebar/10 flex items-center justify-center">
+                    <FileText size={20} className="text-sidebar" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <p className="text-sm font-medium text-darkest truncate max-w-[200px]">{formData.file.name}</p>
+                    <p className="text-xs text-cardLight">{(formData.file.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, file: null }) }}
+                    className="p-1 rounded-lg hover:bg-red-50 text-cardLight hover:text-red-500 transition-colors"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-sidebar/10 flex items-center justify-center">
+                    <UploadCloud size={22} className="text-sidebar" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-darkest">
+                      {isDragging ? 'Lepaskan file di sini' : 'Drag & drop file atau klik untuk pilih'}
+                    </p>
+                    <p className="text-xs text-cardLight mt-0.5">PDF, DOC, DOCX, XLS, XLSX</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex gap-3 pt-2">
@@ -342,11 +427,23 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           </div>
           <div>
             <label className="block text-sm text-darkest/70 mb-1">Kategori</label>
-            <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" />
+            {(KATEGORI_OPTIONS[kategori] || []).length > 0 ? (
+              <div className="relative">
+                <select required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20 appearance-none cursor-pointer pr-9">
+                  <option value="" className="text-cardLight">-- Pilih Kategori --</option>
+                  {KATEGORI_OPTIONS[kategori].map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-cardLight pointer-events-none" />
+              </div>
+            ) : (
+              <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20" placeholder="Masukkan kategori" />
+            )}
           </div>
           <div>
-            <label className="block text-sm text-darkest/70 mb-1">Division</label>
-            <input type="text" readOnly value={kategori} className="w-full px-3 py-2 bg-gray-100 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
+            <label className="block text-sm text-darkest/70 mb-1">Divisi</label>
+            <input type="text" readOnly value={kategori} className="w-full px-3 py-2.5 bg-gray-50 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => { setShowEditModal(false); setEditTarget(null) }} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium">Batal</button>
