@@ -47,15 +47,21 @@ const arsipSlice = createSlice({
         state.error = action.payload
       })
       .addCase(uploadArsipThunk.fulfilled, (state, action) => {
-        const kategori = action.meta.arg.kategori
-        state.dokumenByKategori[kategori].unshift(action.payload)
-        state.pagination.total += 1
+        // Real API: refetch handled in component. Mock: push directly.
+        if (!action.payload?.refetch) {
+          const kategori = action.meta.arg.kategori
+          state.dokumenByKategori[kategori].unshift(action.payload)
+          state.pagination.total += 1
+        }
       })
       .addCase(editArsipThunk.fulfilled, (state, action) => {
-        const { kategori, ...doc } = action.payload
-        const list = state.dokumenByKategori[kategori]
-        const idx = list.findIndex((d) => d.id === doc.id)
-        if (idx !== -1) list[idx] = { ...list[idx], ...doc }
+        // Real API: refetch handled in component. Mock: update directly.
+        if (!action.payload?.refetch) {
+          const { kategori, ...doc } = action.payload
+          const list = state.dokumenByKategori[kategori]
+          const idx = list.findIndex((d) => d.id === doc.id)
+          if (idx !== -1) list[idx] = { ...list[idx], ...doc }
+        }
       })
       .addCase(deleteArsipThunk.fulfilled, (state, action) => {
         const { id, kategori } = action.payload

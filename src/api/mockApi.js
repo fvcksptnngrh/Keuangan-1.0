@@ -1,6 +1,5 @@
 import {
   users,
-  inventaris,
   arsipKepegawaian,
   arsipKeuangan,
   arsipUmum,
@@ -14,13 +13,13 @@ const arsipMap = {
 }
 
 // Auth
-export const mockLoginApi = ({ username, password }) => {
+export const mockLoginApi = ({ nip, password }) => {
   const user = users.find(
-    (u) => u.username === username && u.password === password
+    (u) => u.nip === nip && u.password === password
   )
   if (!user) {
     return Promise.reject({
-      response: { status: 401, data: { message: 'Username atau password salah' } },
+      response: { status: 400, data: { message: 'Password atau NIP salah' } },
     })
   }
   const { password: _, ...userWithoutPassword } = user
@@ -41,51 +40,8 @@ export const mockGetMeApi = () => {
   const user = users.find((u) => u.role === role)
   if (!user) return Promise.reject({ response: { status: 401 } })
   const { password: _, ...userWithoutPassword } = user
-  return withDelay(userWithoutPassword)
+  return withDelay({ ...userWithoutPassword, nama: userWithoutPassword.nama || userWithoutPassword.username })
 }
-
-// Inventaris
-let mockInventaris = [...inventaris]
-
-export const mockGetInventarisApi = () => withDelay(mockInventaris)
-
-export const mockGetInventarisByIdApi = (id) => {
-  const item = mockInventaris.find((i) => i.id === id)
-  return item
-    ? withDelay(item)
-    : Promise.reject({ response: { status: 404 } })
-}
-
-export const mockCreateInventarisApi = (data) => {
-  const newItem = { ...data, id: Date.now() }
-  mockInventaris.push(newItem)
-  return withDelay(newItem)
-}
-
-export const mockUpdateInventarisApi = (id, data) => {
-  const index = mockInventaris.findIndex((i) => i.id === id)
-  if (index === -1) return Promise.reject({ response: { status: 404 } })
-  mockInventaris[index] = { ...mockInventaris[index], ...data }
-  return withDelay(mockInventaris[index])
-}
-
-export const mockDeleteInventarisApi = (id) => {
-  mockInventaris = mockInventaris.filter((i) => i.id !== id)
-  return withDelay({ message: 'Deleted' })
-}
-
-export const mockPinjamInventarisApi = (id) => {
-  const item = mockInventaris.find((i) => i.id === id)
-  if (!item) return Promise.reject({ response: { status: 404 } })
-  if (item.stok <= 0)
-    return Promise.reject({
-      response: { status: 400, data: { message: 'Stok habis' } },
-    })
-  item.stok -= 1
-  return withDelay({ message: 'Peminjaman berhasil', item })
-}
-
-export const mockRiwayatPeminjamanApi = () => withDelay([])
 
 // Arsip
 const mockArsip = {

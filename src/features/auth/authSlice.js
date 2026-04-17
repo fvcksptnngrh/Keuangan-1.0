@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { loginThunk, getMeThunk, logoutThunk } from './authThunks'
+import { loginThunk, registerThunk, getMeThunk, logoutThunk } from './authThunks'
 
 const initialState = {
   user: null,
@@ -48,6 +48,17 @@ const authSlice = createSlice({
       .addCase(loginThunk.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload || 'Login gagal'
+      })
+      .addCase(registerThunk.pending, (state) => {
+        state.isLoading = true
+        state.error = null
+      })
+      .addCase(registerThunk.fulfilled, (state) => {
+        state.isLoading = false
+      })
+      .addCase(registerThunk.rejected, (state, action) => {
+        state.isLoading = false
+        state.error = action.payload || 'Pendaftaran gagal'
       })
       .addCase(getMeThunk.pending, (state) => {
         state.isLoading = true

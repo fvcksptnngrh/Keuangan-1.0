@@ -28,58 +28,6 @@ export const users = [
   },
 ]
 
-export const inventaris = [
-  {
-    id: 1,
-    nama: 'Laptop ASUS VivoBook 14',
-    stok: 12,
-    gambar: null,
-    kategori: 'Elektronik',
-  },
-  {
-    id: 2,
-    nama: 'Proyektor Epson EB-X51',
-    stok: 5,
-    gambar: null,
-    kategori: 'Elektronik',
-  },
-  {
-    id: 3,
-    nama: 'Kursi Ergonomis Highback',
-    stok: 30,
-    gambar: null,
-    kategori: 'Furnitur',
-  },
-  {
-    id: 4,
-    nama: 'Meja Kerja 120x60cm',
-    stok: 20,
-    gambar: null,
-    kategori: 'Furnitur',
-  },
-  {
-    id: 5,
-    nama: 'Printer HP LaserJet Pro',
-    stok: 8,
-    gambar: null,
-    kategori: 'Elektronik',
-  },
-  {
-    id: 6,
-    nama: 'Whiteboard Magnetic 120x90',
-    stok: 0,
-    gambar: null,
-    kategori: 'Perlengkapan',
-  },
-  {
-    id: 7,
-    nama: 'AC Daikin 1.5 PK',
-    stok: 3,
-    gambar: null,
-    kategori: 'Elektronik',
-  },
-]
-
 export const arsipKepegawaian = [
   { id: 1, nama: 'SK Pengangkatan PNS Tahun 2024', noDokumen: 'KEP/001/2024', tanggal: '2024-01-15', subBagian: 'Kepegawaian', file: 'sk_pengangkatan_2024.pdf' },
   { id: 2, nama: 'Surat Kenaikan Pangkat Gol. III/b', noDokumen: 'KEP/002/2024', tanggal: '2024-02-10', subBagian: 'Kepegawaian', file: 'kenaikan_pangkat.pdf' },
@@ -123,13 +71,6 @@ export const arsipUmum = [
   { id: 210, nama: 'Dokumentasi Kegiatan HUT RI 79', noDokumen: 'UM/010/2024', tanggal: '2024-08-17', subBagian: 'Dokumentasi', file: 'hut_ri_79.pdf' },
   { id: 211, nama: 'Daftar Inventaris Ruangan Lt. 2', noDokumen: 'UM/011/2024', tanggal: '2024-05-10', subBagian: 'Inventaris', file: 'inventaris_lt2.pdf' },
   { id: 212, nama: 'Surat Izin Penggunaan Aula', noDokumen: 'UM/012/2024', tanggal: '2024-06-01', subBagian: 'Perizinan', file: 'izin_aula.pdf' },
-]
-
-export const aktivitasTerakhir = [
-  { id: 1, userId: 1, nama: 'Budi Santoso', aksi: 'Mengunggah', target: 'Laporan Keuangan Q1.pdf', waktu: '2024-07-15 14:30' },
-  { id: 2, userId: 3, nama: 'Andi Pratama', aksi: 'Mengunduh', target: 'SK Pengangkatan PNS.pdf', waktu: '2024-07-15 13:15' },
-  { id: 3, userId: 2, nama: 'Siti Rahayu', aksi: 'Meminjam', target: 'Proyektor Epson EB-X51', waktu: '2024-07-15 11:00' },
-  { id: 4, userId: 1, nama: 'Budi Santoso', aksi: 'Menghapus', target: 'Draft Surat Lama.pdf', waktu: '2024-07-15 09:45' },
 ]
 
 export const withDelay = (data, ms = 400) =>

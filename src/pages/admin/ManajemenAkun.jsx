@@ -1,72 +1,80 @@
-import { useState } from 'react'
-import { users as initialUsers } from '../../utils/mockData'
+import { useEffect, useState } from 'react'
+import { getUsersApi, registerApi } from '../../api/authApi'
 import Table from '../../components/common/Table'
 import Modal from '../../components/common/Modal'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Loader2 } from 'lucide-react'
 
 const ManajemenAkun = () => {
-  const [userList, setUserList] = useState(
-    initialUsers.map(({ password, ...u }) => u)
-  )
+  const [userList, setUserList] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
   const [showFormModal, setShowFormModal] = useState(false)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [editTarget, setEditTarget] = useState(null)
-  const [deleteTarget, setDeleteTarget] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [formData, setFormData] = useState({
-    nama: '',
-    username: '',
+    name: '',
+    nip: '',
+    email: '',
     password: '',
     role: 'staff',
   })
 
-  const openAdd = () => {
-    setEditTarget(null)
-    setFormData({ nama: '', username: '', password: '', role: 'staff' })
-    setShowFormModal(true)
-  }
-
-  const openEdit = (user) => {
-    setEditTarget(user)
-    setFormData({ nama: user.nama, username: user.username, password: '', role: user.role })
-    setShowFormModal(true)
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    if (editTarget) {
-      setUserList((prev) =>
-        prev.map((u) =>
-          u.id === editTarget.id
-            ? { ...u, nama: formData.nama, username: formData.username, role: formData.role }
-            : u
-        )
-      )
-    } else {
-      setUserList((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          nama: formData.nama,
-          username: formData.username,
-          role: formData.role,
-          nip: '-',
-        },
-      ])
+  const fetchUsers = async () => {
+    setIsLoading(true)
+    try {
+      const response = await getUsersApi()
+      const users = (response.data.data || []).map((u) => ({
+        id: u.ID,
+        nama: u.Name,
+        nip: u.NIP,
+        email: u.Email,
+        role: u.Role,
+      }))
+      setUserList(users)
+    } catch {
+      setUserList([])
+    } finally {
+      setIsLoading(false)
     }
-    setShowFormModal(false)
   }
 
-  const handleDelete = () => {
-    if (!deleteTarget) return
-    setUserList((prev) => prev.filter((u) => u.id !== deleteTarget.id))
-    setShowDeleteModal(false)
-    setDeleteTarget(null)
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const openAdd = () => {
+    setFormData({ name: '', nip: '', email: '', password: '', role: 'staff' })
+    setSubmitError('')
+    setShowFormModal(true)
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSubmitError('')
+    setIsSubmitting(true)
+
+    try {
+      // POST /api/register { nip, name, email, password, role }
+      await registerApi({
+        nip: formData.nip,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      })
+      setShowFormModal(false)
+      fetchUsers() // Refresh list
+    } catch (error) {
+      setSubmitError(error.response?.data?.message || 'Gagal menambah akun')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const columns = [
     { key: 'no', label: 'No', render: (_, i) => i + 1 },
     { key: 'nama', label: 'Nama', sortable: true },
-    { key: 'username', label: 'Username', sortable: true },
+    { key: 'nip', label: 'NIP', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
     {
       key: 'role',
       label: 'Role',
@@ -75,35 +83,6 @@ const ManajemenAkun = () => {
         <span className="capitalize px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent text-darkest">
           {row.role}
         </span>
-      ),
-    },
-    {
-      key: 'aksi',
-      label: 'Aksi',
-      render: (row) => (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              openEdit(row)
-            }}
-            className="p-1.5 rounded-lg hover:bg-accent/30 text-cardMid transition-colors"
-            title="Edit"
-          >
-            <Pencil size={16} />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setDeleteTarget(row)
-              setShowDeleteModal(true)
-            }}
-            className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors"
-            title="Hapus"
-          >
-            <Trash2 size={16} />
-          </button>
-        </div>
       ),
     },
   ]
@@ -124,14 +103,21 @@ const ManajemenAkun = () => {
             Tambah Akun
           </button>
         </div>
-        <Table columns={columns} data={userList} />
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 border-4 border-cardMid border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <Table columns={columns} data={userList} />
+        )}
       </div>
 
-      {/* Form Modal */}
+      {/* Tambah Akun Modal */}
       <Modal
         isOpen={showFormModal}
         onClose={() => setShowFormModal(false)}
-        title={editTarget ? 'Edit Akun' : 'Tambah Akun'}
+        title="Tambah Akun"
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -140,28 +126,36 @@ const ManajemenAkun = () => {
             <input
               type="text"
               required
-              value={formData.nama}
-              onChange={(e) => setFormData({ ...formData, nama: e.target.value })}
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid"
             />
           </div>
           <div>
-            <label className="block text-sm text-darkest/70 mb-1">Username</label>
+            <label className="block text-sm text-darkest/70 mb-1">NIP</label>
             <input
               type="text"
               required
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              value={formData.nip}
+              onChange={(e) => setFormData({ ...formData, nip: e.target.value })}
               className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid"
             />
           </div>
           <div>
-            <label className="block text-sm text-darkest/70 mb-1">
-              Password {editTarget && '(kosongkan jika tidak diubah)'}
-            </label>
+            <label className="block text-sm text-darkest/70 mb-1">Email</label>
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-darkest/70 mb-1">Password</label>
             <input
               type="password"
-              required={!editTarget}
+              required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid"
@@ -179,6 +173,11 @@ const ManajemenAkun = () => {
               <option value="staff">Staff</option>
             </select>
           </div>
+
+          {submitError && (
+            <p className="text-red-500 text-sm text-center">{submitError}</p>
+          )}
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -189,45 +188,14 @@ const ManajemenAkun = () => {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-xl bg-sidebar hover:bg-darkest text-white font-bold transition-colors"
+              disabled={isSubmitting}
+              className="flex-1 py-2.5 rounded-xl bg-sidebar hover:bg-darkest text-white font-bold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
             >
-              {editTarget ? 'Simpan' : 'Tambah'}
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+              {isSubmitting ? 'Memproses...' : 'Tambah'}
             </button>
           </div>
         </form>
-      </Modal>
-
-      {/* Delete Confirmation */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false)
-          setDeleteTarget(null)
-        }}
-        title="Konfirmasi Hapus"
-        maxWidth="max-w-sm"
-      >
-        <p className="text-sm text-darkest/70 mb-6">
-          Apakah Anda yakin ingin menghapus akun{' '}
-          <span className="text-darkest font-medium">"{deleteTarget?.nama}"</span>?
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => {
-              setShowDeleteModal(false)
-              setDeleteTarget(null)
-            }}
-            className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium"
-          >
-            Batal
-          </button>
-          <button
-            onClick={handleDelete}
-            className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-colors"
-          >
-            Hapus
-          </button>
-        </div>
       </Modal>
     </div>
   )

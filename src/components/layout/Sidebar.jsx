@@ -4,9 +4,7 @@ import { useDispatch } from 'react-redux'
 import {
   Home,
   FolderOpen,
-  Package,
   Users,
-  Settings,
   LogOut,
   ChevronRight,
   ClipboardList,
@@ -31,23 +29,7 @@ const menuItems = [
       { label: 'Umum', path: '/arsip/umum' },
     ],
   },
-  {
-    label: 'Inventaris Persediaan',
-    icon: Package,
-    feature: 'inventaris',
-    key: 'inventaris',
-    children: [
-      { label: 'Katalog Barang', path: '/inventaris/katalog' },
-      { label: 'Riwayat Peminjaman', path: '/inventaris/peminjaman' },
-    ],
-  },
   { label: 'Manajemen Akun', icon: Users, path: '/admin/akun', feature: 'admin' },
-  {
-    label: 'Manajemen Inventaris',
-    icon: Settings,
-    path: '/admin/inventaris',
-    feature: 'admin',
-  },
   {
     label: 'Log Aktivitas',
     icon: ClipboardList,

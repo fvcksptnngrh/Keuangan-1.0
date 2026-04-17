@@ -1,14 +1,30 @@
 import api from './axiosInstance'
 
-export const getArsipApi = (kategori, params) => api.get(`/arsip/${kategori}`, { params })
-export const getArsipByIdApi = (id) => api.get(`/arsip/${id}`)
-export const uploadArsipApi = (kategori, formData) =>
-  api.post(`/arsip/${kategori}`, formData, {
+// GET /api/archive?division=kepegawaian&keyword=&category=&start_date=&end_date=&limit=
+export const getArsipApi = (division, params = {}) =>
+  api.get('/api/archive', { params: { division, ...params } })
+
+// GET /api/archive/:id
+export const getArsipByIdApi = (id) => api.get(`/api/archive/${id}`)
+
+// POST /api/archive/ (formdata: name, number, category, created_date, file, division)
+export const uploadArsipApi = (formData) =>
+  api.post('/api/archive/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
-export const editArsipApi = (id, data) => api.put(`/arsip/${id}`, data)
-export const deleteArsipApi = (id) => api.delete(`/arsip/${id}`)
-export const downloadArsipApi = (id) =>
-  api.get(`/arsip/${id}/download`, { responseType: 'blob' })
-export const searchArsipApi = (kategori, query) =>
-  api.get(`/arsip/${kategori}/search`, { params: { q: query } })
+
+// PUT /api/archive/:id (formdata: name, number, created_date, division)
+export const editArsipApi = (id, formData) =>
+  api.put(`/api/archive/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+
+// DELETE /api/archive/:id
+export const deleteArsipApi = (id) => api.delete(`/api/archive/${id}`)
+
+// GET /api/archive/preview?path=uploads/xxx.pdf
+export const previewArsipApi = (path) =>
+  api.get('/api/archive/preview', {
+    params: { path },
+    responseType: 'blob',
+  })

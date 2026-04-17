@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchArsipThunk, uploadArsipThunk, editArsipThunk, deleteArsipThunk, downloadArsipThunk } from '../../features/arsip/arsipThunks'
+import { fetchArsipThunk, uploadArsipThunk, editArsipThunk, deleteArsipThunk, downloadArsipThunk, previewArsipThunk } from '../../features/arsip/arsipThunks'
 import { addLog } from '../../features/log/logSlice'
 import { useAuth } from '../../hooks/useAuth'
 import { canAccess } from '../../utils/roleGuard'
@@ -8,7 +8,7 @@ import Table from '../common/Table'
 import Pagination from '../common/Pagination'
 import SearchBar from '../common/SearchBar'
 import Modal from '../common/Modal'
-import { Plus, FileText, Download, Trash2, Eye, Pencil } from 'lucide-react'
+import { Plus, FileText, Download, Trash2, Pencil, Eye, Loader2 } from 'lucide-react'
 
 const ArsipPage = ({ kategori, judul, subjudul }) => {
   const dispatch = useDispatch()
@@ -28,6 +28,10 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
+  const [previewName, setPreviewName] = useState('')
   const [formData, setFormData] = useState({
     nama: '',
     noDokumen: '',
@@ -46,8 +50,8 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     return dokumen.filter((doc) => {
       const matchSearch =
         !search ||
-        doc.nama.toLowerCase().includes(search.toLowerCase()) ||
-        doc.noDokumen.toLowerCase().includes(search.toLowerCase())
+        (doc.nama || '').toLowerCase().includes(search.toLowerCase()) ||
+        (doc.noDokumen || '').toLowerCase().includes(search.toLowerCase())
       const matchDateFrom = !dateFrom || doc.tanggal >= dateFrom
       const matchDateTo = !dateTo || doc.tanggal <= dateTo
       return matchSearch && matchDateFrom && matchDateTo
@@ -60,19 +64,28 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     page * ITEMS_PER_PAGE
   )
 
+  // Build FormData with real API field names
+  const buildFormData = (data, includeFile = false) => {
+    const fd = new FormData()
+    fd.append('name', data.nama)
+    fd.append('number', data.noDokumen)
+    fd.append('created_date', data.tanggal)
+    fd.append('category', data.subBagian)
+    fd.append('division', kategori)
+    if (includeFile && data.file) {
+      fd.append('file', data.file)
+    }
+    return fd
+  }
+
   const handleUpload = async (e) => {
     e.preventDefault()
-    const fd = new FormData()
-    fd.append('nama', formData.nama)
-    fd.append('noDokumen', formData.noDokumen)
-    fd.append('tanggal', formData.tanggal)
-    fd.append('subBagian', formData.subBagian)
-    if (formData.file) fd.append('file', formData.file)
-
+    const fd = buildFormData(formData, true)
     await dispatch(uploadArsipThunk({ kategori, formData: fd }))
     dispatch(addLog({ userId: user.id, nama: user.nama, aksi: 'Mengunggah', target: formData.nama }))
     setShowUploadModal(false)
     setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
+    dispatch(fetchArsipThunk(kategori))
   }
 
   const openEdit = (doc) => {
@@ -89,14 +102,12 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
 
   const handleEdit = async (e) => {
     e.preventDefault()
-    await dispatch(editArsipThunk({
-      id: editTarget.id,
-      kategori,
-      data: { nama: formData.nama, noDokumen: formData.noDokumen, tanggal: formData.tanggal, subBagian: formData.subBagian },
-    }))
+    const fd = buildFormData(formData)
+    await dispatch(editArsipThunk({ id: editTarget.id, kategori, formData: fd }))
     setShowEditModal(false)
     setEditTarget(null)
     setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
+    dispatch(fetchArsipThunk(kategori))
   }
 
   const handleDelete = async () => {
@@ -108,9 +119,32 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   }
 
   const handleDownload = (doc) => {
-    dispatch(downloadArsipThunk({ id: doc.id, fileName: doc.file }))
+    dispatch(downloadArsipThunk({ fileUrl: doc.file, fileName: doc.nama || 'dokumen.pdf' }))
     dispatch(addLog({ userId: user.id, nama: user.nama, aksi: 'Mengunduh', target: doc.nama }))
   }
+
+  const handlePreview = useCallback(async (doc) => {
+    if (!doc.file) return
+    setPreviewName(doc.nama || 'Dokumen')
+    setPreviewLoading(true)
+    setShowPreviewModal(true)
+    setPreviewUrl(null)
+
+    try {
+      const result = await dispatch(previewArsipThunk(doc.file)).unwrap()
+      setPreviewUrl(result)
+    } catch {
+      setPreviewUrl(null)
+    } finally {
+      setPreviewLoading(false)
+    }
+  }, [dispatch])
+
+  const closePreview = useCallback(() => {
+    setShowPreviewModal(false)
+    setPreviewUrl(null)
+    setPreviewName('')
+  }, [])
 
   const columns = [
     {
@@ -121,31 +155,24 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     { key: 'nama', label: 'Nama Dokumen', sortable: true },
     { key: 'noDokumen', label: 'No. Dokumen', sortable: true },
     { key: 'tanggal', label: 'Tgl. Dokumen', sortable: true },
-    { key: 'subBagian', label: 'Sub Bagian', sortable: true },
-    // Staff: no file column
-    ...(canDownload
-      ? [
-          {
-            key: 'file',
-            label: 'File',
-            render: (row) => (
-              <div className="flex items-center gap-1.5">
-                <FileText size={16} className="text-cardMid" />
-                <span className="text-xs text-cardLight truncate max-w-[120px]">
-                  {row.file}
-                </span>
-              </div>
-            ),
-          },
-        ]
-      : []),
+    { key: 'subBagian', label: 'Kategori', sortable: true },
     {
       key: 'aksi',
       label: 'Aksi',
       render: (row) => (
         <div className="flex items-center gap-1">
-          {canDownload && (
+          {canDownload && row.file && (
             <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handlePreview(row)
+                }}
+                className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-500 transition-colors"
+                title="Preview"
+              >
+                <Eye size={16} />
+              </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation()
@@ -155,12 +182,6 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
                 title="Download"
               >
                 <Download size={16} />
-              </button>
-              <button
-                className="p-1.5 rounded-lg hover:bg-accent/30 text-cardMid transition-colors"
-                title="Detail"
-              >
-                <Eye size={16} />
               </button>
             </>
           )}
@@ -278,8 +299,12 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
             <input type="date" required value={formData.tanggal} onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" />
           </div>
           <div>
-            <label className="block text-sm text-darkest/70 mb-1">Sub Bagian</label>
-            <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" />
+            <label className="block text-sm text-darkest/70 mb-1">Kategori</label>
+            <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" placeholder="Contoh: belanja barang, pendidikan, dll." />
+          </div>
+          <div>
+            <label className="block text-sm text-darkest/70 mb-1">Division</label>
+            <input type="text" readOnly value={kategori} className="w-full px-3 py-2 bg-gray-100 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
           </div>
           <div>
             <label className="block text-sm text-darkest/70 mb-1">Upload File</label>
@@ -316,8 +341,12 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
             <input type="date" required value={formData.tanggal} onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" />
           </div>
           <div>
-            <label className="block text-sm text-darkest/70 mb-1">Sub Bagian</label>
+            <label className="block text-sm text-darkest/70 mb-1">Kategori</label>
             <input type="text" required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-cardMid" />
+          </div>
+          <div>
+            <label className="block text-sm text-darkest/70 mb-1">Division</label>
+            <input type="text" readOnly value={kategori} className="w-full px-3 py-2 bg-gray-100 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => { setShowEditModal(false); setEditTarget(null) }} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium">Batal</button>
@@ -342,6 +371,59 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           <button onClick={handleDelete} className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition-colors">Hapus</button>
         </div>
       </Modal>
+
+      {/* PDF Preview Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-[9999]">
+          {/* Backdrop blur */}
+
+          {/* Modal container — offset by sidebar on desktop */}
+          <div className="absolute inset-0 lg:left-[260px] flex items-center pt-80 justify-start pl-4 sm:pl-6">
+            <div className="relative w-[90%] max-w-7xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '75vh' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-lg bg-sidebar/10 flex items-center justify-center flex-shrink-0">
+                    <FileText size={16} className="text-sidebar" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-darkest truncate">{previewName}</p>
+                    <p className="text-xs text-cardLight">Preview Dokumen</p>
+                  </div>
+                </div>
+                <button
+                  onClick={closePreview}
+                  className="p-2 rounded-xl hover:bg-gray-200 transition-colors flex-shrink-0"
+                  title="Tutup"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-darkest/60"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              {/* PDF Content */}
+              <div className="flex-1 bg-gray-100 flex items-center justify-center overflow-hidden">
+                {previewLoading ? (
+                  <div className="flex flex-col items-center gap-3 text-darkest/40">
+                    <Loader2 size={36} className="animate-spin" />
+                    <span className="text-sm">Memuat dokumen...</span>
+                  </div>
+                ) : previewUrl ? (
+                  <iframe
+                    src={previewUrl}
+                    title={previewName}
+                    className="w-full h-full border-0 bg-white"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-3 text-darkest/40">
+                    <FileText size={48} className="opacity-50" />
+                    <span className="text-sm">Gagal memuat preview dokumen</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

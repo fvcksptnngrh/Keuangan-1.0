@@ -10,4 +10,4 @@ Thumbs.db
 .vite
 .claude
 .env.example
-.gitignore
+*.postman_collection.json

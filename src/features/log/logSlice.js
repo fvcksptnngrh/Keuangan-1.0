@@ -1,11 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { aktivitasTerakhir } from '../../utils/mockData'
 
 const initialState = {
-  logs: aktivitasTerakhir.map((a) => ({
-    ...a,
-    waktu: a.waktu,
-  })),
+  logs: [],
 }
 
 const logSlice = createSlice({

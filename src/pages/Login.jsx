@@ -1,22 +1,22 @@
 import { useState } from 'react'
 import { useNavigate, Navigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
-import { User, Lock, Eye, EyeOff, Loader2, UserPlus, BadgeCheck } from 'lucide-react'
+import { BadgeCheck, Lock, Eye, EyeOff, Loader2, UserPlus, Mail } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { loginThunk } from '../features/auth/authThunks'
+import { loginThunk, registerThunk } from '../features/auth/authThunks'
 import { clearError } from '../features/auth/authSlice'
 
 const Login = () => {
-  const [mode, setMode] = useState('login') // 'login' | 'register'
-  const [username, setUsername] = useState('')
+  const [mode, setMode] = useState('login')
+  const [nip, setNip] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [validationError, setValidationError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
-  // Register-only fields
+  // Register fields
   const [nama, setNama] = useState('')
-  const [nip, setNip] = useState('')
+  const [email, setEmail] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
   const dispatch = useDispatch()
@@ -44,12 +44,12 @@ const Login = () => {
     e.preventDefault()
     resetFields()
 
-    if (!username.trim() || !password.trim()) {
-      setValidationError('Username dan password tidak boleh kosong')
+    if (!nip.trim() || !password.trim()) {
+      setValidationError('NIP dan password tidak boleh kosong')
       return
     }
 
-    const result = await dispatch(loginThunk({ username, password }))
+    const result = await dispatch(loginThunk({ nip, password }))
     if (loginThunk.fulfilled.match(result)) {
       navigate('/dashboard')
     }
@@ -59,7 +59,7 @@ const Login = () => {
     e.preventDefault()
     resetFields()
 
-    if (!nama.trim() || !username.trim() || !password.trim() || !nip.trim()) {
+    if (!nama.trim() || !nip.trim() || !email.trim() || !password.trim()) {
       setValidationError('Semua field wajib diisi')
       return
     }
@@ -72,16 +72,27 @@ const Login = () => {
       return
     }
 
-    // Mock register — in real app this would POST to an API
-    setSuccessMessage('Pendaftaran berhasil! Silakan login.')
-    setTimeout(() => {
-      setMode('login')
-      setPassword('')
-      setConfirmPassword('')
-      setNama('')
-      setNip('')
-      setSuccessMessage('')
-    }, 1500)
+    const result = await dispatch(
+      registerThunk({
+        nip,
+        name: nama,
+        email,
+        password,
+        role: 'staff',
+      })
+    )
+
+    if (registerThunk.fulfilled.match(result)) {
+      setSuccessMessage('Pendaftaran berhasil! Silakan login.')
+      setTimeout(() => {
+        setMode('login')
+        setPassword('')
+        setConfirmPassword('')
+        setNama('')
+        setEmail('')
+        setSuccessMessage('')
+      }, 1500)
+    }
   }
 
   const isRegister = mode === 'register'
@@ -90,11 +101,11 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-[460px]">
         <div className="flex justify-center mb-6">
-          <img src="/logo-login.png" alt="Logo" className="h-45 object-contain" />
+          <img src="/logo-login.png" alt="Logo" className="h-32 object-contain" />
         </div>
 
         <div
-          className="rounded-2xl px-8 sm:px-10 py-12 shadow-xl min-h-[0px] flex flex-col"
+          className="rounded-2xl px-8 sm:px-10 py-10 shadow-xl flex flex-col"
           style={{ backgroundColor: '#00325A' }}
         >
           <h2 className="text-2xl font-bold text-white text-center mb-2">
@@ -108,7 +119,7 @@ const Login = () => {
 
           <form
             onSubmit={isRegister ? handleRegister : handleLogin}
-            className="space-y-4 flex-1 flex flex-col"
+            className="space-y-4"
           >
             {isRegister && (
               <div className="relative">
@@ -126,35 +137,35 @@ const Login = () => {
               </div>
             )}
 
-            {isRegister && (
-              <div className="relative">
-                <BadgeCheck
-                  size={18}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-cardLight"
-                />
-                <input
-                  type="text"
-                  placeholder="NIP"
-                  value={nip}
-                  onChange={(e) => setNip(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
-                />
-              </div>
-            )}
-
             <div className="relative">
-              <User
+              <BadgeCheck
                 size={18}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-cardLight"
               />
               <input
                 type="text"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="NIP"
+                value={nip}
+                onChange={(e) => setNip(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
               />
             </div>
+
+            {isRegister && (
+              <div className="relative">
+                <Mail
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-cardLight"
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
+                />
+              </div>
+            )}
 
             <div className="relative">
               <Lock
@@ -202,7 +213,7 @@ const Login = () => {
               <p className="text-green-400 text-sm text-center">{successMessage}</p>
             )}
 
-            <div className="flex-1" />
+            <div className="pt-2" />
 
             <button
               type="submit"
