@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { loginApi, registerApi, logoutApi } from '../../api/authApi'
+import { loginApi, registerApi, logoutApi, changePasswordApi, forgotPasswordApi } from '../../api/authApi'
 import { mockLoginApi, mockLogoutApi, mockGetMeApi } from '../../api/mockApi'
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
@@ -65,6 +65,39 @@ export const logoutThunk = createAsyncThunk('auth/logout', async () => {
     localStorage.removeItem('token')
   }
 })
+
+export const changePasswordThunk = createAsyncThunk(
+  'auth/changePassword',
+  async ({ oldPassword, newPassword }, { rejectWithValue }) => {
+    try {
+      if (useMock) return { message: 'Password berhasil diubah' }
+      const response = await changePasswordApi({
+        old_password: oldPassword,
+        new_password: newPassword,
+      })
+      return { message: response.data.message || 'Password berhasil diubah' }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Gagal mengubah password'
+      )
+    }
+  }
+)
+
+export const forgotPasswordThunk = createAsyncThunk(
+  'auth/forgotPassword',
+  async ({ email }, { rejectWithValue }) => {
+    try {
+      if (useMock) return { message: 'Link reset password telah dikirim' }
+      const response = await forgotPasswordApi({ email })
+      return { message: response.data.message || 'Link reset password telah dikirim ke email Anda' }
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Gagal mengirim link reset password'
+      )
+    }
+  }
+)
 
 export const getMeThunk = createAsyncThunk(
   'auth/getMe',

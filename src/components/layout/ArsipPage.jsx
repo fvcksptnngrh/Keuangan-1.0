@@ -9,6 +9,8 @@ import Pagination from '../common/Pagination'
 import SearchBar from '../common/SearchBar'
 import Modal from '../common/Modal'
 import { Plus, FileText, Download, Trash2, Pencil, Eye, Loader2, UploadCloud, X, ChevronDown } from 'lucide-react'
+import { Viewer, Worker, SpecialZoomLevel } from '@react-pdf-viewer/core'
+import '@react-pdf-viewer/core/lib/styles/index.css'
 
 const KATEGORI_OPTIONS = {
   kepegawaian: [
@@ -431,6 +433,9 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
               <div className="relative">
                 <select required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20 appearance-none cursor-pointer pr-9">
                   <option value="" className="text-cardLight">-- Pilih Kategori --</option>
+                  {formData.subBagian && !KATEGORI_OPTIONS[kategori].includes(formData.subBagian) && (
+                    <option value={formData.subBagian}>{formData.subBagian} (tersimpan)</option>
+                  )}
                   {KATEGORI_OPTIONS[kategori].map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
@@ -505,11 +510,14 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
                     <span className="text-sm">Memuat dokumen...</span>
                   </div>
                 ) : previewUrl ? (
-                  <iframe
-                    src={previewUrl}
-                    title={previewName}
-                    className="w-full h-full border-0 bg-white"
-                  />
+                  <div className="w-full h-full">
+                    <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
+                      <Viewer
+                        fileUrl={previewUrl}
+                        defaultScale={SpecialZoomLevel.PageWidth}
+                      />
+                    </Worker>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center gap-3 text-darkest/40">
                     <FileText size={48} className="opacity-50" />

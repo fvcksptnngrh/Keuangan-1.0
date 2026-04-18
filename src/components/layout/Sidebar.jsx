@@ -8,6 +8,7 @@ import {
   LogOut,
   ChevronRight,
   ClipboardList,
+  KeyRound,
   Menu,
   X,
 } from 'lucide-react'
@@ -36,6 +37,7 @@ const menuItems = [
     path: '/admin/log',
     feature: 'log',
   },
+  { label: 'Ubah Password', icon: KeyRound, path: '/akun/ubah-password', feature: 'dashboard' },
 ]
 
 const getInitialOpenMenu = (pathname) => {

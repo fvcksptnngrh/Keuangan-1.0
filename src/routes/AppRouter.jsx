@@ -8,6 +8,7 @@ import ArsipKeuangan from '../pages/arsip/ArsipKeuangan'
 import ArsipUmum from '../pages/arsip/ArsipUmum'
 import ManajemenAkun from '../pages/admin/ManajemenAkun'
 import LogAktivitas from '../pages/admin/LogAktivitas'
+import UbahPassword from '../pages/akun/UbahPassword'
 import NotFound from '../pages/errors/NotFound'
 import ServerError from '../pages/errors/ServerError'
 import Forbidden from '../pages/errors/Forbidden'
@@ -28,6 +29,7 @@ const AppRouter = () => {
           }
         >
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/akun/ubah-password" element={<UbahPassword />} />
 
           {/* Arsip */}
           <Route path="/arsip/kepegawaian" element={<ArsipKepegawaian />} />
