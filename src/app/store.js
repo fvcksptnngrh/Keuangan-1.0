@@ -17,7 +17,8 @@ import logReducer from '../features/log/logSlice'
 const authPersistConfig = {
   key: 'auth',
   storage,
-  whitelist: ['token', 'user', 'role', 'isAuthenticated'],
+  // Token is in httpOnly cookie (not accessible to JS), so no need to persist it.
+  whitelist: ['user', 'role', 'isAuthenticated'],
 }
 
 export const store = configureStore({

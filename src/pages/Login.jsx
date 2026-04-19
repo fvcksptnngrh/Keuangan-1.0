@@ -326,6 +326,17 @@ const Login = () => {
             )}
           </form>
         </div>
+
+        {import.meta.env.DEV && (
+          <div className="mt-4 text-center">
+            <a
+              href="/reset-password?token=dev-preview"
+              className="text-xs text-cardLight/70 hover:text-cardLight underline"
+            >
+              [dev] Preview halaman Reset Password
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )

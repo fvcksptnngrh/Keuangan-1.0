@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from '../components/layout/MainLayout'
 import ProtectedRoute from '../components/layout/ProtectedRoute'
+import { useAuth } from '../hooks/useAuth'
 import Login from '../pages/Login'
+import ResetPassword from '../pages/ResetPassword'
 import Dashboard from '../pages/Dashboard'
 import ArsipKepegawaian from '../pages/arsip/ArsipKepegawaian'
 import ArsipKeuangan from '../pages/arsip/ArsipKeuangan'
@@ -13,11 +15,17 @@ import NotFound from '../pages/errors/NotFound'
 import ServerError from '../pages/errors/ServerError'
 import Forbidden from '../pages/errors/Forbidden'
 
+const RootRedirect = () => {
+  const { isAuthenticated } = useAuth()
+  return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />
+}
+
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/403" element={<Forbidden />} />
         <Route path="/500" element={<ServerError />} />
 
@@ -55,7 +63,7 @@ const AppRouter = () => {
           />
         </Route>
 
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

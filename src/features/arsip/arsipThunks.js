@@ -115,9 +115,23 @@ export const downloadArsipThunk = createAsyncThunk(
         return { fileName }
       }
 
-      // Real API: PathFile is already a full preview URL with token
-      // Open in new tab for preview/download
-      window.open(fileUrl, '_blank')
+      // Real API: fetch as blob through proxy so httpOnly cookie is sent automatically
+      let url = fileUrl
+      if (url.startsWith('http')) {
+        const u = new URL(url)
+        u.searchParams.delete('token')
+        url = u.pathname + (u.search ? u.search : '')
+      }
+      const axios = (await import('../../api/axiosInstance')).default
+      const response = await axios.get(url, { responseType: 'blob' })
+      const blobUrl = window.URL.createObjectURL(response.data)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = fileName || 'dokumen.pdf'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(blobUrl)
       return { fileName }
     } catch (error) {
       return rejectWithValue('Gagal mengunduh file')
@@ -129,21 +143,20 @@ export const previewArsipThunk = createAsyncThunk(
   'arsip/preview',
   async (pathFile, { rejectWithValue }) => {
     try {
-      if (useMock) {
-        return null
-      }
+      if (useMock) return null
 
-      // PathFile from API is a full URL — convert to relative for Vite proxy
+      // JWT is in httpOnly cookie — browser sends it automatically with the iframe request.
+      // No need to append token in the query string.
       if (pathFile.startsWith('http')) {
+        // Strip any ?token=... left over from older backend payloads; cookie is authoritative.
         const u = new URL(pathFile)
-        return u.pathname + u.search
+        u.searchParams.delete('token')
+        return u.pathname + (u.search ? u.search : '')
       }
 
-      // Fallback: if it's already a relative path like "uploads/xxx.pdf"
-      const token = localStorage.getItem('token')
-      if (!token) return rejectWithValue('Token tidak ditemukan')
-      return `/api/archive/preview?path=${encodeURIComponent(pathFile)}&token=${encodeURIComponent(token)}`
-    } catch (error) {
+      // Relative path fallback
+      return `/api/archive/preview?path=${encodeURIComponent(pathFile)}`
+    } catch {
       return rejectWithValue('Gagal memuat preview')
     }
   }

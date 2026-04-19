@@ -11,3 +11,6 @@ Thumbs.db
 .claude
 .env.example
 *.postman_collection.json
+*API.json
+*api.json
+*NEW PORTU API.json

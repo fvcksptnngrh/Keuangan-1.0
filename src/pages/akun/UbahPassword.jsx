@@ -38,7 +38,13 @@ const UbahPassword = () => {
     }
 
     setIsLoading(true)
-    const result = await dispatch(changePasswordThunk({ oldPassword, newPassword }))
+    const result = await dispatch(
+      changePasswordThunk({
+        oldPassword,
+        newPassword,
+        confirmPassword,
+      })
+    )
     setIsLoading(false)
 
     if (changePasswordThunk.fulfilled.match(result)) {
