@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { loginApi, registerApi, logoutApi, changePasswordApi, forgotPasswordApi, resetPasswordApi } from '../../api/authApi'
+import { loginApi, registerApi, logoutApi, changePasswordApi, forgotPasswordApi, resetPasswordApi, getMeApi } from '../../api/authApi'
 import { mockLoginApi, mockLogoutApi, mockGetMeApi } from '../../api/mockApi'
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
@@ -126,8 +126,9 @@ export const getMeThunk = createAsyncThunk(
         const response = await mockGetMeApi()
         return response.data
       }
-      // No dedicated /me endpoint in API — rely on the login data stored in Redux
-      return rejectWithValue('No getMe endpoint')
+      const response = await getMeApi()
+      const userData = response.data.data || response.data
+      return userData
     } catch (error) {
       return rejectWithValue('Session expired')
     }

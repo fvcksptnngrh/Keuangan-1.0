@@ -25,18 +25,24 @@ Aplikasi web dashboard untuk manajemen arsip dokumen dan inventaris persediaan k
 
 ## Setup
 
+### Local Development
+
 ```bash
 # Install dependencies
 npm install
 
+# Copy environment template to local file
+cp .env.example .env.local
+
+# Edit .env.local with your API URL
+# VITE_API_URL=http://localhost:8082
+# VITE_USE_MOCK=true
+
 # Jalankan dev server
 npm run dev
-
-# Build untuk production
-npm run build
 ```
 
-Aplikasi berjalan di `http://localhost:3000`
+Aplikasi berjalan di `http://localhost:5173` (default Vite port)
 
 ## Demo Credentials
 
@@ -71,9 +77,43 @@ src/
 
 ## Environment Variables
 
+**Configuration for development:**
+
+Create `.env.local` file (not committed to git):
 ```env
-VITE_API_URL=http://localhost:8080/api/v1
+VITE_API_URL=http://localhost:8082
 VITE_USE_MOCK=true
 ```
 
-Set `VITE_USE_MOCK=false` untuk menggunakan backend API asli.
+**Production deployment (Vercel):**
+- Set environment variables in Vercel Dashboard → Settings → Environment Variables
+- `VITE_API_URL` = Your production backend URL
+- `VITE_USE_MOCK` = false
+
+⚠️ **Security note:** Never commit `.env` files with real credentials or API URLs. Use `.env.example` as a template for contributors.
+
+## Contributing
+
+Before submitting a PR:
+
+1. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
+   # Edit .env.local with your local backend URL
+   npm install
+   npm run dev
+   ```
+
+2. **Security Guidelines**
+   - ✅ DO commit `.env.example` with placeholder values
+   - ❌ DON'T commit `.env` or `.env.local` files
+   - ❌ DON'T commit credentials, tokens, or real API URLs
+   - Use environment variables for sensitive config
+
+3. **Testing**
+   - Test with mock API: `VITE_USE_MOCK=true`
+   - Test with real API before pushing
+
+## License
+
+Internal use for institution | Open source portfolio
