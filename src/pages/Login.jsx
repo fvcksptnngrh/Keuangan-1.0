@@ -5,6 +5,8 @@ import { BadgeCheck, Lock, Eye, EyeOff, Loader2, UserPlus, Mail } from 'lucide-r
 import { useAuth } from '../hooks/useAuth'
 import { loginThunk, registerThunk, forgotPasswordThunk } from '../features/auth/authThunks'
 import { clearError } from '../features/auth/authSlice'
+import { fetchArsipThunk } from '../features/arsip/arsipThunks'
+import { fetchLogsThunk } from '../features/log/logThunks'
 
 const Login = () => {
   const [mode, setMode] = useState('login')
@@ -78,6 +80,11 @@ const Login = () => {
 
     const result = await dispatch(loginThunk({ nip, password }))
     if (loginThunk.fulfilled.match(result)) {
+      // Fetch initial data after successful login
+      dispatch(fetchArsipThunk('kepegawaian'))
+      dispatch(fetchArsipThunk('keuangan'))
+      dispatch(fetchArsipThunk('umum'))
+      dispatch(fetchLogsThunk())
       navigate('/dashboard')
     }
   }

@@ -1,5 +1,8 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
 import { getLogsApi } from '../../api/logsApi'
+import { mockGetMeApi } from '../../api/mockApi'
+
+const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 
 const pickFirst = (obj, keys) => {
   for (const k of keys) {
@@ -36,6 +39,23 @@ export const fetchLogsThunk = createAsyncThunk(
       const CACHE_TTL = 10 * 60 * 1000 // 10 minutes
       if (cached?.length > 0 && lastFetch && (now - lastFetch) < CACHE_TTL) {
         return cached
+      }
+
+      if (useMock) {
+        const response = await mockGetMeApi()
+        if (response.data) {
+          return [
+            {
+              id: 1,
+              userId: response.data.id,
+              nama: response.data.nama || response.data.username,
+              aksi: 'Login',
+              target: 'Dashboard',
+              waktu: new Date().toLocaleString('sv-SE').replace('T', ' ').slice(0, 19),
+            },
+          ]
+        }
+        return []
       }
 
       const response = await getLogsApi(params)
