@@ -13,6 +13,7 @@ const initialState = {
     keuangan: [],
     umum: [],
   },
+  lastFetch: {}, // Track fetch timestamp per kategori for caching
   activeKategori: 'keuangan',
   isLoading: false,
   error: null,
@@ -39,7 +40,9 @@ const arsipSlice = createSlice({
       })
       .addCase(fetchArsipThunk.fulfilled, (state, action) => {
         state.isLoading = false
-        state.dokumenByKategori[action.meta.arg] = action.payload
+        const kategori = action.meta.arg
+        state.dokumenByKategori[kategori] = action.payload
+        state.lastFetch[kategori] = Date.now()
         state.pagination.total = action.payload.length
       })
       .addCase(fetchArsipThunk.rejected, (state, action) => {

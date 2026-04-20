@@ -1,13 +1,21 @@
-import { useState } from 'react'
-import { useSelector } from 'react-redux'
-import { Search, Clock } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { Search, Clock, Loader2 } from 'lucide-react'
 import Avatar from '../../components/common/Avatar'
+import { fetchLogsThunk } from '../../features/log/logThunks'
 
 const LogAktivitas = () => {
+  const dispatch = useDispatch()
   const logs = useSelector((state) => state.log.logs)
+  const isLoading = useSelector((state) => state.log.isLoading)
+  const error = useSelector((state) => state.log.error)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const perPage = 15
+
+  useEffect(() => {
+    dispatch(fetchLogsThunk())
+  }, [dispatch])
 
   const filtered = logs.filter(
     (log) =>
@@ -57,7 +65,24 @@ const LogAktivitas = () => {
             </tr>
           </thead>
           <tbody>
-            {paginated.map((log, i) => (
+            {isLoading && (
+              <tr>
+                <td colSpan={4} className="text-center py-12 text-cardLight">
+                  <div className="inline-flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin" />
+                    Memuat log...
+                  </div>
+                </td>
+              </tr>
+            )}
+            {!isLoading && error && (
+              <tr>
+                <td colSpan={4} className="text-center py-12 text-red-500">
+                  {error}
+                </td>
+              </tr>
+            )}
+            {!isLoading && !error && paginated.map((log, i) => (
               <tr
                 key={log.id}
                 className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
@@ -84,7 +109,7 @@ const LogAktivitas = () => {
                 </td>
               </tr>
             ))}
-            {paginated.length === 0 && (
+            {!isLoading && !error && paginated.length === 0 && (
               <tr>
                 <td colSpan={4} className="text-center py-12 text-cardLight">
                   Tidak ada log ditemukan

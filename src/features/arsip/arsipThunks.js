@@ -23,11 +23,21 @@ const normalizeDoc = (doc) => ({
 
 export const fetchArsipThunk = createAsyncThunk(
   'arsip/fetchAll',
-  async (kategori, { rejectWithValue }) => {
+  async (kategori, { rejectWithValue, getState }) => {
     try {
       if (useMock) {
         const response = await mockGetArsipApi(kategori)
         return response.data
+      }
+
+      // Check cache: if data exists and is < 5 min old, skip network
+      const state = getState()
+      const cached = state.arsip.dokumenByKategori[kategori]
+      const lastFetch = state.arsip.lastFetch?.[kategori]
+      const now = Date.now()
+      const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+      if (cached && lastFetch && (now - lastFetch) < CACHE_TTL) {
+        return cached
       }
 
       // Real API: GET /api/archive?division=kepegawaian
@@ -145,19 +155,20 @@ export const previewArsipThunk = createAsyncThunk(
     try {
       if (useMock) return null
 
-      // JWT is in httpOnly cookie — browser sends it automatically with the iframe request.
-      // No need to append token in the query string.
-      if (pathFile.startsWith('http')) {
-        // Strip any ?token=... left over from older backend payloads; cookie is authoritative.
-        const u = new URL(pathFile)
-        u.searchParams.delete('token')
-        return u.pathname + (u.search ? u.search : '')
+      if (!pathFile) return rejectWithValue('File path tidak tersedia')
+
+      // PathFile already contains the preview token; use it directly
+      let url = pathFile
+      if (url.startsWith('http')) {
+        const u = new URL(url)
+        url = u.pathname + u.search
       }
 
-      // Relative path fallback
-      return `/api/archive/preview?path=${encodeURIComponent(pathFile)}`
-    } catch {
-      return rejectWithValue('Gagal memuat preview')
+      const axios = (await import('../../api/axiosInstance')).default
+      const response = await axios.get(url, { responseType: 'blob' })
+      return URL.createObjectURL(response.data)
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Gagal memuat preview')
     }
   }
 )

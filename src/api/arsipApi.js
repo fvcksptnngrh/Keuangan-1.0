@@ -9,15 +9,11 @@ export const getArsipByIdApi = (id) => api.get(`/api/archive/${id}`)
 
 // POST /api/archive/ (formdata: name, number, category, created_date, file, division)
 export const uploadArsipApi = (formData) =>
-  api.post('/api/archive/', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  api.post('/api/archive/', formData)
 
 // PUT /api/archive/:id (formdata: name, number, created_date, division)
 export const editArsipApi = (id, formData) =>
-  api.put(`/api/archive/${id}`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  api.put(`/api/archive/${id}`, formData)
 
 // DELETE /api/archive/:id
 export const deleteArsipApi = (id) => api.delete(`/api/archive/${id}`)

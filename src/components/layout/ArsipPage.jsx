@@ -165,7 +165,10 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
 
   const closePreview = useCallback(() => {
     setShowPreviewModal(false)
-    setPreviewUrl(null)
+    setPreviewUrl((prev) => {
+      if (prev && prev.startsWith('blob:')) URL.revokeObjectURL(prev)
+      return null
+    })
     setPreviewName('')
   }, [])
 

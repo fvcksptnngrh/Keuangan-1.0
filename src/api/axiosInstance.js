@@ -1,7 +1,5 @@
 import axios from 'axios'
 
-// withCredentials: true makes the browser send httpOnly cookies (including JWT)
-// with every request automatically. Auth header is NOT needed.
 const api = axios.create({
   baseURL: '',
   timeout: 15000,
@@ -13,11 +11,18 @@ const api = axios.create({
 
 const PUBLIC_PATHS = ['/login', '/reset-password', '/403', '/500']
 
+api.interceptors.request.use((config) => {
+  // For FormData, remove explicit Content-Type so browser/axios sets multipart with boundary
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
+  return config
+})
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('persist:auth')
       const path = window.location.pathname
       if (!PUBLIC_PATHS.includes(path)) {
         window.location.replace('/login')

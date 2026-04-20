@@ -2,20 +2,24 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useAuth } from '../hooks/useAuth'
 import { fetchArsipThunk } from '../features/arsip/arsipThunks'
+import { fetchLogsThunk } from '../features/log/logThunks'
 import DonutChart from '../components/common/DonutChart'
 import Avatar from '../components/common/Avatar'
 
 const Dashboard = () => {
   const dispatch = useDispatch()
-  const { user } = useAuth()
+  const { user, isAuthenticated } = useAuth()
   const { dokumenByKategori } = useSelector((state) => state.arsip)
   const logs = useSelector((state) => state.log.logs)
 
   useEffect(() => {
-    dispatch(fetchArsipThunk('kepegawaian'))
-    dispatch(fetchArsipThunk('keuangan'))
-    dispatch(fetchArsipThunk('umum'))
-  }, [dispatch])
+    if (isAuthenticated) {
+      dispatch(fetchArsipThunk('kepegawaian'))
+      dispatch(fetchArsipThunk('keuangan'))
+      dispatch(fetchArsipThunk('umum'))
+      dispatch(fetchLogsThunk()) // Fetch logs on login/dashboard load
+    }
+  }, [dispatch, isAuthenticated])
 
   const totalDokumen =
     dokumenByKategori.kepegawaian.length +

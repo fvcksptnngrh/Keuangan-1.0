@@ -15,7 +15,7 @@ export const loginThunk = createAsyncThunk(
       }
 
       // Real API: POST /api/login { nip, password }
-      // JWT is set by backend as httpOnly cookie — no token handling on frontend
+      // Backend returns token in response body, also sets as cookie.
       const response = await loginApi(credentials)
       const apiData = response.data.data || {}
       const user = {
@@ -24,7 +24,8 @@ export const loginThunk = createAsyncThunk(
         nama: apiData.name,
         role: apiData.role,
       }
-      return { token: null, user }
+      const token = apiData.token || null
+      return { token, user }
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 'NIP atau password salah'
@@ -54,13 +55,14 @@ export const registerThunk = createAsyncThunk(
   }
 )
 
-export const logoutThunk = createAsyncThunk('auth/logout', async () => {
+export const logoutThunk = createAsyncThunk('auth/logout', async (_, { dispatch }) => {
   try {
     const api = useMock ? mockLogoutApi : logoutApi
     await api()
   } catch {
-    // ignore — backend should clear the cookie, but we still want to clear local state
+    // ignore — always clear local state
   }
+  return null
 })
 
 export const changePasswordThunk = createAsyncThunk(
