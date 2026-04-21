@@ -157,8 +157,8 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white">
       <div className="w-full max-w-[460px]">
-        <div className="flex justify-center mb-6">
-          <img src="/logo-login.png" alt="Logo" className="h-32 object-contain" />
+        <div className="flex justify-center mb-4">
+          <img src="/logo-login.png" alt="Logo" className="h-29 object-contain" />
         </div>
 
         <div
@@ -334,16 +334,6 @@ const Login = () => {
           </form>
         </div>
 
-        {import.meta.env.DEV && (
-          <div className="mt-4 text-center">
-            <a
-              href="/reset-password?token=dev-preview"
-              className="text-xs text-cardLight/70 hover:text-cardLight underline"
-            >
-              [dev] Preview halaman Reset Password
-            </a>
-          </div>
-        )}
       </div>
     </div>
   )
