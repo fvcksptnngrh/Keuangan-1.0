@@ -14,8 +14,10 @@ export const getArsipNewestApi = () => api.get('/api/archive/newest')
 export const getArsipCountApi = () => api.get('/api/archive/count')
 
 // POST /api/archive (formdata: name, number, category, created_date, file, division)
-export const uploadArsipApi = (formData) =>
-  api.post('/api/archive', formData, { onUploadProgress: (progressEvent) => console.log(formData) })
+export const uploadArsipApi = (formData) => {
+  console.log(formData)
+  return api.post('/api/archive', formData)
+}
 
 // PUT /api/archive/:id (formdata: name, number, created_date, division)
 export const editArsipApi = (id, formData) =>
