@@ -4,6 +4,14 @@ import { mockLoginApi, mockLogoutApi, mockGetMeApi } from '../../api/mockApi'
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 
+const parseJwt = (token) => {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    return {}
+  }
+}
+
 export const loginThunk = createAsyncThunk(
   'auth/login',
   async (credentials, { rejectWithValue }) => {
@@ -15,16 +23,18 @@ export const loginThunk = createAsyncThunk(
       }
 
       // Real API: POST /api/login { nip, password }
-      // Backend returns token in response body, also sets as cookie.
+      // Backend returns token in response body and/or sets as httpOnly cookie.
+      // If response.data.data only contains { token }, decode the JWT payload as fallback.
       const response = await loginApi(credentials)
       const apiData = response.data.data || {}
-      const user = {
-        id: apiData.id,
-        nip: apiData.nip,
-        nama: apiData.name,
-        role: apiData.role,
-      }
       const token = apiData.token || null
+      const jwt = token ? parseJwt(token) : {}
+      const user = {
+        id: apiData.id ?? jwt.id,
+        nip: apiData.nip ?? jwt.nip,
+        nama: apiData.name ?? jwt.name,
+        role: apiData.role ?? jwt.role,
+      }
       return { token, user }
     } catch (error) {
       return rejectWithValue(

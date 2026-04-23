@@ -25,6 +25,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       const path = window.location.pathname
       if (!PUBLIC_PATHS.includes(path)) {
+        // Clear persisted auth so Login page doesn't redirect back to dashboard
+        localStorage.removeItem('persist:auth')
         window.location.replace('/login')
       }
     }

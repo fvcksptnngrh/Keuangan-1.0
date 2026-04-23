@@ -5,6 +5,8 @@ import {
   editArsipThunk,
   deleteArsipThunk,
   downloadArsipThunk,
+  fetchNewestArsipThunk,
+  fetchArsipCountThunk,
 } from './arsipThunks'
 
 const initialState = {
@@ -13,11 +15,16 @@ const initialState = {
     keuangan: [],
     umum: [],
   },
-  lastFetch: {}, // Track fetch timestamp per kategori for caching
+  lastFetch: {},
   activeKategori: 'keuangan',
   isLoading: false,
   error: null,
   pagination: { page: 1, total: 0, limit: 10 },
+  newestArsip: [],
+  totalDokumen: 0,
+  totalKepegawaian: 0,
+  totalKeuangan: 0,
+  totalUmum: 0,
 }
 
 const arsipSlice = createSlice({
@@ -75,6 +82,15 @@ const arsipSlice = createSlice({
       })
       .addCase(downloadArsipThunk.fulfilled, () => {
         // Download handled in thunk
+      })
+      .addCase(fetchNewestArsipThunk.fulfilled, (state, action) => {
+        state.newestArsip = action.payload
+      })
+      .addCase(fetchArsipCountThunk.fulfilled, (state, action) => {
+        state.totalDokumen = action.payload.totalDokumen
+        state.totalKepegawaian = action.payload.totalKepegawaian
+        state.totalKeuangan = action.payload.totalKeuangan
+        state.totalUmum = action.payload.totalUmum
       })
   },
 })

@@ -1,10 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
 import MainLayout from '../components/layout/MainLayout'
 import ProtectedRoute from '../components/layout/ProtectedRoute'
 import { useAuth } from '../hooks/useAuth'
-import { getMeThunk } from '../features/auth/authThunks'
 import Login from '../pages/Login'
 import ResetPassword from '../pages/ResetPassword'
 import Dashboard from '../pages/Dashboard'
@@ -19,23 +16,7 @@ import ServerError from '../pages/errors/ServerError'
 import Forbidden from '../pages/errors/Forbidden'
 
 const RootRedirect = () => {
-  const { isAuthenticated, isLoading } = useAuth()
-  const dispatch = useDispatch()
-
-  useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      dispatch(getMeThunk())
-    }
-  }, [])
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-main">
-        <div className="w-10 h-10 border-4 border-cardMid border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
-  }
-
+  const { isAuthenticated } = useAuth()
   return <Navigate to={isAuthenticated ? '/dashboard' : '/login'} replace />
 }
 

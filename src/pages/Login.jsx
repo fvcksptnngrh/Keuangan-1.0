@@ -5,8 +5,6 @@ import { BadgeCheck, Lock, Eye, EyeOff, Loader2, UserPlus, Mail } from 'lucide-r
 import { useAuth } from '../hooks/useAuth'
 import { loginThunk, registerThunk, forgotPasswordThunk } from '../features/auth/authThunks'
 import { clearError } from '../features/auth/authSlice'
-import { fetchArsipThunk } from '../features/arsip/arsipThunks'
-import { fetchLogsThunk } from '../features/log/logThunks'
 
 const Login = () => {
   const [mode, setMode] = useState('login')
@@ -80,11 +78,6 @@ const Login = () => {
 
     const result = await dispatch(loginThunk({ nip, password }))
     if (loginThunk.fulfilled.match(result)) {
-      // Fetch initial data after successful login
-      dispatch(fetchArsipThunk('kepegawaian'))
-      dispatch(fetchArsipThunk('keuangan'))
-      dispatch(fetchArsipThunk('umum'))
-      dispatch(fetchLogsThunk())
       navigate('/dashboard')
     }
   }
@@ -214,6 +207,7 @@ const Login = () => {
                 <input
                   type="text"
                   placeholder="NIP"
+                  autoComplete="username"
                   value={nip}
                   onChange={(e) => setNip(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"
@@ -246,6 +240,7 @@ const Login = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full pl-10 pr-10 py-3 bg-white/10 border border-white/15 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-accent/50 transition-colors"

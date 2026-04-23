@@ -1,5 +1,5 @@
 import { createAsyncThunk } from '@reduxjs/toolkit'
-import { getArsipApi, uploadArsipApi, editArsipApi, deleteArsipApi, previewArsipApi } from '../../api/arsipApi'
+import { getArsipApi, uploadArsipApi, editArsipApi, deleteArsipApi, previewArsipApi, getArsipNewestApi, getArsipCountApi } from '../../api/arsipApi'
 import {
   mockGetArsipApi,
   mockUploadArsipApi,
@@ -145,6 +145,45 @@ export const downloadArsipThunk = createAsyncThunk(
       return { fileName }
     } catch (error) {
       return rejectWithValue('Gagal mengunduh file')
+    }
+  }
+)
+
+export const fetchNewestArsipThunk = createAsyncThunk(
+  'arsip/fetchNewest',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getArsipNewestApi()
+      const items = response.data?.data
+      if (!Array.isArray(items)) return []
+      return items.map((doc) => ({
+        id: doc.id,
+        nama: doc.name || '',
+        noDokumen: doc.number || '',
+        tanggal: doc.created_date || '',
+        subBagian: doc.category || '',
+        division: doc.division || '',
+      }))
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Gagal memuat arsip terbaru')
+    }
+  }
+)
+
+export const fetchArsipCountThunk = createAsyncThunk(
+  'arsip/fetchCount',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await getArsipCountApi()
+      const d = response.data?.data
+      return {
+        totalDokumen: d?.total_documents ?? 0,
+        totalKepegawaian: d?.total_kepegawaian ?? 0,
+        totalKeuangan: d?.total_keuangan ?? 0,
+        totalUmum: d?.total_umum ?? 0,
+      }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Gagal memuat total dokumen')
     }
   }
 )
