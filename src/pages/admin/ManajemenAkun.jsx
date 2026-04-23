@@ -23,11 +23,11 @@ const ManajemenAkun = () => {
     try {
       const response = await getUsersApi()
       const users = (response.data.data || []).map((u) => ({
-        id: u.ID,
-        nama: u.Name,
-        nip: u.NIP,
-        email: u.Email,
-        role: u.Role,
+        id: u.id ?? u.ID,
+        nama: u.name ?? u.Name,
+        nip: u.nip ?? u.NIP,
+        email: u.email ?? u.Email,
+        role: u.role ?? u.Role,
       }))
       setUserList(users)
     } catch {
