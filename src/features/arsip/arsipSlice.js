@@ -9,17 +9,23 @@ import {
   fetchArsipCountThunk,
 } from './arsipThunks'
 
+const emptyKategoriState = () => ({
+  items: [],
+  page: 1,
+  cursorByPage: { 1: '' },
+  nextCursor: null,
+  hasMore: false,
+})
+
 const initialState = {
-  dokumenByKategori: {
-    kepegawaian: [],
-    keuangan: [],
-    umum: [],
+  byKategori: {
+    kepegawaian: emptyKategoriState(),
+    keuangan: emptyKategoriState(),
+    umum: emptyKategoriState(),
   },
-  lastFetch: {},
   activeKategori: 'keuangan',
   isLoading: false,
   error: null,
-  pagination: { page: 1, total: 0, limit: 10 },
   newestArsip: [],
   totalDokumen: 0,
   totalKepegawaian: 0,
@@ -33,10 +39,10 @@ const arsipSlice = createSlice({
   reducers: {
     setActiveKategori(state, action) {
       state.activeKategori = action.payload
-      state.pagination.page = 1
     },
-    setPage(state, action) {
-      state.pagination.page = action.payload
+    resetPagination(state, action) {
+      const kategori = action.payload
+      state.byKategori[kategori] = emptyKategoriState()
     },
   },
   extraReducers: (builder) => {
@@ -47,42 +53,28 @@ const arsipSlice = createSlice({
       })
       .addCase(fetchArsipThunk.fulfilled, (state, action) => {
         state.isLoading = false
-        const kategori = action.meta.arg
-        state.dokumenByKategori[kategori] = action.payload
-        state.lastFetch[kategori] = Date.now()
-        state.pagination.total = action.payload.length
+        const { kategori, items, nextCursor, hasMore, page, cursorUsed } = action.payload
+        const branch = state.byKategori[kategori]
+        branch.items = items
+        branch.page = page
+        branch.nextCursor = nextCursor
+        branch.hasMore = hasMore
+        branch.cursorByPage[page] = cursorUsed ?? ''
       })
       .addCase(fetchArsipThunk.rejected, (state, action) => {
         state.isLoading = false
         state.error = action.payload
       })
-      .addCase(uploadArsipThunk.fulfilled, (state, action) => {
-        // Real API: refetch handled in component. Mock: push directly.
-        if (!action.payload?.refetch) {
-          const kategori = action.meta.arg.kategori
-          state.dokumenByKategori[kategori].unshift(action.payload)
-          state.pagination.total += 1
-        }
+      .addCase(uploadArsipThunk.fulfilled, () => {
+        // Refetch is triggered from the component after upload succeeds.
       })
-      .addCase(editArsipThunk.fulfilled, (state, action) => {
-        // Real API: refetch handled in component. Mock: update directly.
-        if (!action.payload?.refetch) {
-          const { kategori, ...doc } = action.payload
-          const list = state.dokumenByKategori[kategori]
-          const idx = list.findIndex((d) => d.id === doc.id)
-          if (idx !== -1) list[idx] = { ...list[idx], ...doc }
-        }
+      .addCase(editArsipThunk.fulfilled, () => {
+        // Refetch is triggered from the component after edit succeeds.
       })
-      .addCase(deleteArsipThunk.fulfilled, (state, action) => {
-        const { id, kategori } = action.payload
-        state.dokumenByKategori[kategori] = state.dokumenByKategori[kategori].filter(
-          (d) => d.id !== id
-        )
-        state.pagination.total -= 1
+      .addCase(deleteArsipThunk.fulfilled, () => {
+        // Refetch is triggered from the component after delete succeeds.
       })
-      .addCase(downloadArsipThunk.fulfilled, () => {
-        // Download handled in thunk
-      })
+      .addCase(downloadArsipThunk.fulfilled, () => {})
       .addCase(fetchNewestArsipThunk.fulfilled, (state, action) => {
         state.newestArsip = action.payload
       })
@@ -95,5 +87,5 @@ const arsipSlice = createSlice({
   },
 })
 
-export const { setActiveKategori, setPage } = arsipSlice.actions
+export const { setActiveKategori, resetPagination } = arsipSlice.actions
 export default arsipSlice.reducer

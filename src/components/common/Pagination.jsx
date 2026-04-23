@@ -1,6 +1,43 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+const Pagination = ({
+  mode = 'numbered',
+  currentPage,
+  totalPages,
+  onPageChange,
+  hasPrev,
+  hasNext,
+  onPrev,
+  onNext,
+}) => {
+  if (mode === 'cursor') {
+    const prevEnabled = hasPrev ?? currentPage > 1
+    const nextEnabled = Boolean(hasNext)
+    return (
+      <div className="flex items-center justify-end gap-2 mt-4">
+        <button
+          onClick={onPrev}
+          disabled={!prevEnabled}
+          className="flex items-center gap-1 px-3 h-8 rounded-lg bg-white border border-cardLight/30 text-darkest text-sm font-medium hover:bg-accent/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft size={16} />
+          Prev
+        </button>
+        <span className="px-3 h-8 flex items-center text-sm text-darkest/70">
+          Halaman {currentPage || 1}
+        </span>
+        <button
+          onClick={onNext}
+          disabled={!nextEnabled}
+          className="flex items-center gap-1 px-3 h-8 rounded-lg bg-white border border-cardLight/30 text-darkest text-sm font-medium hover:bg-accent/30 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          Next
+          <ChevronRight size={16} />
+        </button>
+      </div>
+    )
+  }
+
   if (totalPages <= 1) return null
 
   const getPages = () => {

@@ -10,42 +10,102 @@ import {
 
 const useMock = import.meta.env.VITE_USE_MOCK === 'true'
 
-// Normalize: API format → frontend format
-const normalizeDoc = (doc) => ({
-  id: doc.ID,
-  nama: doc.Name || '',
-  noDokumen: doc.Number || '',
-  tanggal: doc.CreatedDate ? doc.CreatedDate.split('T')[0] : '',
-  subBagian: doc.Category || '',
-  division: doc.Division || '',
-  file: doc.PathFile || '',
-})
+// Backend may return PascalCase or lowercase keys — accept both.
+const pick = (doc, ...keys) => {
+  for (const k of keys) {
+    if (doc[k] !== undefined && doc[k] !== null) return doc[k]
+  }
+  return ''
+}
 
+const normalizeDoc = (doc) => {
+  const createdDate = pick(doc, 'CreatedDate', 'created_date', 'createdDate')
+  return {
+    id: pick(doc, 'ID', 'id'),
+    nama: pick(doc, 'Name', 'name') || '',
+    noDokumen: pick(doc, 'Number', 'number') || '',
+    tanggal: typeof createdDate === 'string' && createdDate.includes('T')
+      ? createdDate.split('T')[0]
+      : createdDate || '',
+    subBagian: pick(doc, 'Category', 'category') || '',
+    division: pick(doc, 'Division', 'division') || '',
+    file: pick(doc, 'PathFile', 'path_file', 'pathFile') || '',
+  }
+}
+
+/**
+ * fetchArsipThunk
+ * arg: {
+ *   kategori,
+ *   keyword?, category?, startDate?, endDate?,
+ *   direction: 'first' | 'next' | 'prev',
+ * }
+ * Uses cursor stored in slice.byKategori[kategori].cursorByPage to walk pages.
+ */
 export const fetchArsipThunk = createAsyncThunk(
   'arsip/fetchAll',
-  async (kategori, { rejectWithValue, getState }) => {
+  async (arg, { rejectWithValue, getState }) => {
     try {
+      const {
+        kategori,
+        keyword = '',
+        category = '',
+        startDate = '',
+        endDate = '',
+        direction = 'first',
+      } = typeof arg === 'string' ? { kategori: arg } : arg
+
       if (useMock) {
         const response = await mockGetArsipApi(kategori)
-        return response.data
+        return {
+          kategori,
+          items: response.data || [],
+          nextCursor: null,
+          hasMore: false,
+          page: 1,
+          cursorUsed: '',
+        }
       }
 
-      // Check cache: if data exists and is < 5 min old, skip network
-      const state = getState()
-      const cached = state.arsip.dokumenByKategori[kategori]
-      const lastFetch = state.arsip.lastFetch?.[kategori]
-      const now = Date.now()
-      const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-      if (cached && lastFetch && (now - lastFetch) < CACHE_TTL) {
-        return cached
+      const branch = getState().arsip.byKategori[kategori]
+      let targetPage = 1
+      let cursor = ''
+
+      if (direction === 'next' && branch?.nextCursor != null) {
+        targetPage = (branch.page || 1) + 1
+        cursor = String(branch.nextCursor)
+      } else if (direction === 'prev' && (branch?.page || 1) > 1) {
+        targetPage = branch.page - 1
+        cursor = branch.cursorByPage[targetPage] ?? ''
+      } else {
+        targetPage = 1
+        cursor = ''
       }
 
-      // Real API: GET /api/archive?division=kepegawaian
-      // Response: { status, message, data: { items: [...], next_cursor, has_more } }
-      const response = await getArsipApi(kategori)
-      const apiData = response.data.data
-      if (!apiData?.items || !Array.isArray(apiData.items)) return []
-      return apiData.items.map(normalizeDoc)
+      const params = {
+        limit: 10,
+        cursor,
+      }
+      if (keyword) params.keyword = keyword
+      if (category) params.category = category
+      if (startDate) params.start_date = startDate
+      if (endDate) params.end_date = endDate
+
+      const response = await getArsipApi(kategori, params)
+      const apiData = response.data?.data
+      const rawItems = Array.isArray(apiData) ? apiData : (apiData?.items || [])
+      const items = rawItems.map(normalizeDoc)
+      const nextCursor = Array.isArray(apiData) ? null : (apiData?.next_cursor ?? null)
+      const hasMore = Array.isArray(apiData) ? false : Boolean(apiData?.has_more)
+
+      return {
+        kategori,
+        items,
+        nextCursor,
+        hasMore,
+        page: targetPage,
+        cursorUsed: cursor,
+      }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Gagal memuat arsip')
     }
@@ -60,10 +120,7 @@ export const uploadArsipThunk = createAsyncThunk(
         const response = await mockUploadArsipApi(kategori, formData)
         return response.data
       }
-
-      // Real API: POST /api/archive/ (formdata)
       await uploadArsipApi(formData)
-      // Re-fetch to get the full normalized list
       return { refetch: true }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Gagal mengunggah arsip')
@@ -79,8 +136,6 @@ export const editArsipThunk = createAsyncThunk(
         const response = await mockEditArsipApi(id, formData)
         return { ...response.data, kategori }
       }
-
-      // Real API: PUT /api/archive/:id (formdata)
       await editArsipApi(id, formData)
       return { refetch: true, kategori }
     } catch (error) {
@@ -97,8 +152,6 @@ export const deleteArsipThunk = createAsyncThunk(
         await mockDeleteArsipApi(id)
         return { id, kategori }
       }
-
-      // Real API: DELETE /api/archive/:id
       await deleteArsipApi(id)
       return { id, kategori }
     } catch (error) {
@@ -125,7 +178,6 @@ export const downloadArsipThunk = createAsyncThunk(
         return { fileName }
       }
 
-      // Real API: fetch as blob through proxy so httpOnly cookie is sent automatically
       let url = fileUrl
       if (url.startsWith('http')) {
         const u = new URL(url)
@@ -193,10 +245,8 @@ export const previewArsipThunk = createAsyncThunk(
   async (pathFile, { rejectWithValue }) => {
     try {
       if (useMock) return null
-
       if (!pathFile) return rejectWithValue('File path tidak tersedia')
 
-      // PathFile already contains the preview token; use it directly
       let url = pathFile
       if (url.startsWith('http')) {
         const u = new URL(url)

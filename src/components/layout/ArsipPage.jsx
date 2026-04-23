@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchArsipThunk, uploadArsipThunk, editArsipThunk, deleteArsipThunk, downloadArsipThunk, previewArsipThunk } from '../../features/arsip/arsipThunks'
 import { addLog } from '../../features/log/logSlice'
@@ -32,19 +32,23 @@ const KATEGORI_OPTIONS = {
   umum: [],
 }
 
+const SEARCH_DEBOUNCE_MS = 400
+
 const ArsipPage = ({ kategori, judul, subjudul }) => {
   const dispatch = useDispatch()
   const { user, role } = useAuth()
-  const { dokumenByKategori, isLoading } = useSelector((state) => state.arsip)
-  const dokumen = dokumenByKategori[kategori] || []
+  const { byKategori, isLoading } = useSelector((state) => state.arsip)
+  const branch = byKategori[kategori] || { items: [], page: 1, hasMore: false }
+  const dokumen = branch.items
 
   const canCrud = canAccess(role, 'arsip.crud')
   const canDownload = canAccess(role, 'arsip.download')
 
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [page, setPage] = useState(1)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -64,30 +68,67 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   })
 
   const ITEMS_PER_PAGE = 10
+  const categoryOptions = KATEGORI_OPTIONS[kategori] || []
+
+  // Debounce search input.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(handle)
+  }, [search])
+
+  // Reset filters when switching kategori so we don't carry state across pages.
+  const prevKategoriRef = useRef(kategori)
+  useEffect(() => {
+    if (prevKategoriRef.current !== kategori) {
+      setSearch('')
+      setDebouncedSearch('')
+      setCategoryFilter('')
+      setDateFrom('')
+      setDateTo('')
+      prevKategoriRef.current = kategori
+    }
+  }, [kategori])
+
+  // Fetch first page whenever kategori or any filter changes.
+  const fetchFirst = useCallback(() => {
+    dispatch(fetchArsipThunk({
+      kategori,
+      keyword: debouncedSearch,
+      category: categoryFilter,
+      startDate: dateFrom,
+      endDate: dateTo,
+      direction: 'first',
+    }))
+  }, [dispatch, kategori, debouncedSearch, categoryFilter, dateFrom, dateTo])
 
   useEffect(() => {
-    dispatch(fetchArsipThunk(kategori))
-  }, [dispatch, kategori])
+    fetchFirst()
+  }, [fetchFirst])
 
-  const filteredDokumen = useMemo(() => {
-    return dokumen.filter((doc) => {
-      const matchSearch =
-        !search ||
-        (doc.nama || '').toLowerCase().includes(search.toLowerCase()) ||
-        (doc.noDokumen || '').toLowerCase().includes(search.toLowerCase())
-      const matchDateFrom = !dateFrom || doc.tanggal >= dateFrom
-      const matchDateTo = !dateTo || doc.tanggal <= dateTo
-      return matchSearch && matchDateFrom && matchDateTo
-    })
-  }, [dokumen, search, dateFrom, dateTo])
+  const goNext = () => {
+    if (!branch.hasMore) return
+    dispatch(fetchArsipThunk({
+      kategori,
+      keyword: debouncedSearch,
+      category: categoryFilter,
+      startDate: dateFrom,
+      endDate: dateTo,
+      direction: 'next',
+    }))
+  }
 
-  const totalPages = Math.ceil(filteredDokumen.length / ITEMS_PER_PAGE)
-  const paginatedDokumen = filteredDokumen.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  )
+  const goPrev = () => {
+    if (branch.page <= 1) return
+    dispatch(fetchArsipThunk({
+      kategori,
+      keyword: debouncedSearch,
+      category: categoryFilter,
+      startDate: dateFrom,
+      endDate: dateTo,
+      direction: 'prev',
+    }))
+  }
 
-  // Build FormData with real API field names
   const buildFormData = (data, includeFile = false) => {
     const fd = new FormData()
     fd.append('name', data.nama)
@@ -108,7 +149,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     dispatch(addLog({ userId: user.id, nama: user.nama, aksi: 'Mengunggah', target: formData.nama }))
     setShowUploadModal(false)
     setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
-    dispatch(fetchArsipThunk(kategori))
+    fetchFirst()
   }
 
   const openEdit = (doc) => {
@@ -130,7 +171,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     setShowEditModal(false)
     setEditTarget(null)
     setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
-    dispatch(fetchArsipThunk(kategori))
+    fetchFirst()
   }
 
   const handleDelete = async () => {
@@ -139,6 +180,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     dispatch(addLog({ userId: user.id, nama: user.nama, aksi: 'Menghapus', target: deleteTarget.nama }))
     setShowDeleteModal(false)
     setDeleteTarget(null)
+    fetchFirst()
   }
 
   const handleDownload = (doc) => {
@@ -176,7 +218,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
     {
       key: 'no',
       label: 'No',
-      render: (_, index) => (page - 1) * ITEMS_PER_PAGE + index + 1,
+      render: (_, index) => (branch.page - 1) * ITEMS_PER_PAGE + index + 1,
     },
     { key: 'nama', label: 'Nama Dokumen', sortable: true },
     { key: 'noDokumen', label: 'No. Dokumen', sortable: true },
@@ -263,6 +305,22 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           )}
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto">
+            {categoryOptions.length > 0 && (
+              <div className="relative">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full sm:w-auto pl-3 pr-8 py-1.5 bg-white border border-cardLight/30 rounded-full text-xs text-darkest focus:outline-none focus:border-cardMid appearance-none cursor-pointer"
+                >
+                  <option value="">Semua Kategori</option>
+                  {categoryOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-cardLight pointer-events-none" />
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <input
                 type="date"
@@ -294,11 +352,14 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           </div>
         ) : (
           <>
-            <Table columns={columns} data={paginatedDokumen} />
+            <Table columns={columns} data={dokumen} />
             <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
+              mode="cursor"
+              currentPage={branch.page}
+              hasPrev={branch.page > 1}
+              hasNext={branch.hasMore}
+              onPrev={goPrev}
+              onNext={goNext}
             />
           </>
         )}
@@ -326,11 +387,11 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           </div>
           <div>
             <label className="block text-sm text-darkest/70 mb-1">Kategori</label>
-            {(KATEGORI_OPTIONS[kategori] || []).length > 0 ? (
+            {categoryOptions.length > 0 ? (
               <div className="relative">
                 <select required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20 appearance-none cursor-pointer pr-9">
                   <option value="" className="text-cardLight">-- Pilih Kategori --</option>
-                  {KATEGORI_OPTIONS[kategori].map((opt) => (
+                  {categoryOptions.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
@@ -432,14 +493,14 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
           </div>
           <div>
             <label className="block text-sm text-darkest/70 mb-1">Kategori</label>
-            {(KATEGORI_OPTIONS[kategori] || []).length > 0 ? (
+            {categoryOptions.length > 0 ? (
               <div className="relative">
                 <select required value={formData.subBagian} onChange={(e) => setFormData({ ...formData, subBagian: e.target.value })} className="w-full px-3 py-2.5 bg-white border border-cardLight/30 rounded-xl text-darkest text-sm focus:outline-none focus:border-sidebar focus:ring-1 focus:ring-sidebar/20 appearance-none cursor-pointer pr-9">
                   <option value="" className="text-cardLight">-- Pilih Kategori --</option>
-                  {formData.subBagian && !KATEGORI_OPTIONS[kategori].includes(formData.subBagian) && (
+                  {formData.subBagian && !categoryOptions.includes(formData.subBagian) && (
                     <option value={formData.subBagian}>{formData.subBagian} (tersimpan)</option>
                   )}
-                  {KATEGORI_OPTIONS[kategori].map((opt) => (
+                  {categoryOptions.map((opt) => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
@@ -480,12 +541,8 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
       {/* PDF Preview Modal */}
       {showPreviewModal && (
         <div className="fixed inset-0 z-[9999]">
-          {/* Backdrop blur */}
-
-          {/* Modal container — offset by sidebar on desktop */}
           <div className="absolute inset-0 lg:left-[260px] flex items-center pt-80 justify-start pl-4 sm:pl-6">
             <div className="relative w-[90%] max-w-7xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '75vh' }}>
-              {/* Header */}
               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-sidebar/10 flex items-center justify-center flex-shrink-0">
@@ -505,7 +562,6 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
                 </button>
               </div>
 
-              {/* PDF Content */}
               <div className="flex-1 bg-gray-100 flex items-center justify-center overflow-hidden">
                 {previewLoading ? (
                   <div className="flex flex-col items-center gap-3 text-darkest/40">
