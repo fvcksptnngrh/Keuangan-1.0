@@ -59,6 +59,8 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewName, setPreviewName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     nama: '',
     noDokumen: '',
@@ -144,12 +146,24 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
 
   const handleUpload = async (e) => {
     e.preventDefault()
-    const fd = buildFormData(formData, true)
-    await dispatch(uploadArsipThunk({ kategori, formData: fd }))
-    dispatch(addLog({ userId: user.id, nama: user.nama, aksi: 'Mengunggah', target: formData.nama }))
-    setShowUploadModal(false)
-    setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
-    fetchFirst()
+    if (!formData.file) {
+      setSubmitError('File dokumen wajib diunggah.')
+      return
+    }
+    setSubmitError('')
+    setIsSubmitting(true)
+    try {
+      const fd = buildFormData(formData, true)
+      await dispatch(uploadArsipThunk({ kategori, formData: fd })).unwrap()
+      dispatch(addLog({ userId: user.id, nama: user.nama, aksi: 'Mengunggah', target: formData.nama }))
+      setShowUploadModal(false)
+      setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
+      fetchFirst()
+    } catch (err) {
+      setSubmitError(typeof err === 'string' ? err : (err?.message || 'Gagal mengunggah arsip'))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const openEdit = (doc) => {
@@ -166,12 +180,20 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
 
   const handleEdit = async (e) => {
     e.preventDefault()
-    const fd = buildFormData(formData)
-    await dispatch(editArsipThunk({ id: editTarget.id, kategori, formData: fd }))
-    setShowEditModal(false)
-    setEditTarget(null)
-    setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
-    fetchFirst()
+    setSubmitError('')
+    setIsSubmitting(true)
+    try {
+      const fd = buildFormData(formData)
+      await dispatch(editArsipThunk({ id: editTarget.id, kategori, formData: fd })).unwrap()
+      setShowEditModal(false)
+      setEditTarget(null)
+      setFormData({ nama: '', noDokumen: '', tanggal: '', subBagian: '', file: null })
+      fetchFirst()
+    } catch (err) {
+      setSubmitError(typeof err === 'string' ? err : (err?.message || 'Gagal mengedit arsip'))
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleDelete = async () => {
@@ -368,7 +390,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
       {/* Upload Modal */}
       <Modal
         isOpen={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
+        onClose={() => { setShowUploadModal(false); setSubmitError('') }}
         title="Unggah Dokumen"
         maxWidth="max-w-lg"
       >
@@ -464,9 +486,15 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
               )}
             </div>
           </div>
+          {submitError && (
+            <p className="text-red-500 text-sm text-center bg-red-50 border border-red-100 rounded-lg py-2 px-3">{submitError}</p>
+          )}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowUploadModal(false)} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium">Batal</button>
-            <button type="submit" className="flex-1 py-2.5 rounded-xl bg-sidebar hover:bg-darkest text-white font-bold transition-colors">Simpan</button>
+            <button type="button" onClick={() => { setShowUploadModal(false); setSubmitError('') }} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium">Batal</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-sidebar hover:bg-darkest text-white font-bold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+              {isSubmitting ? 'Mengunggah...' : 'Simpan'}
+            </button>
           </div>
         </form>
       </Modal>
@@ -474,7 +502,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
       {/* Edit Modal */}
       <Modal
         isOpen={showEditModal}
-        onClose={() => { setShowEditModal(false); setEditTarget(null) }}
+        onClose={() => { setShowEditModal(false); setEditTarget(null); setSubmitError('') }}
         title="Edit Dokumen"
         maxWidth="max-w-lg"
       >
@@ -514,9 +542,15 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
             <label className="block text-sm text-darkest/70 mb-1">Divisi</label>
             <input type="text" readOnly value={kategori} className="w-full px-3 py-2.5 bg-gray-50 border border-cardLight/30 rounded-xl text-darkest text-sm cursor-not-allowed capitalize" />
           </div>
+          {submitError && (
+            <p className="text-red-500 text-sm text-center bg-red-50 border border-red-100 rounded-lg py-2 px-3">{submitError}</p>
+          )}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => { setShowEditModal(false); setEditTarget(null) }} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium">Batal</button>
-            <button type="submit" className="flex-1 py-2.5 rounded-xl bg-sidebar hover:bg-darkest text-white font-bold transition-colors">Simpan</button>
+            <button type="button" onClick={() => { setShowEditModal(false); setEditTarget(null); setSubmitError('') }} className="flex-1 py-2.5 rounded-xl bg-gray-100 text-darkest/50 hover:bg-gray-200 transition-colors font-medium">Batal</button>
+            <button type="submit" disabled={isSubmitting} className="flex-1 py-2.5 rounded-xl bg-sidebar hover:bg-darkest text-white font-bold transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+              {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+            </button>
           </div>
         </form>
       </Modal>
