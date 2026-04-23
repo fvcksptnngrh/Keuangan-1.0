@@ -1,13 +1,8 @@
 {
+  "trailingSlash": true,
   "rewrites": [
     { "source": "/api/:path*", "destination": "http://103.93.129.171:8082/api/:path*" },
-    { "source": "/(.*)", "destination": "/index.html" },
-    {
-    "trailingSlash": true,
-    "rewrites": [
-      { "source": "/api/:path*", "destination": "http://103.93.129.171:8082/api/:path*" },
-      { "source": "/(.*)", "destination": "/index.html" }
-    ]
-  }
+    { "source": "/(.*)", "destination": "/index.html" }
+    
   ]
 }
