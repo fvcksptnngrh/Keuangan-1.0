@@ -29,7 +29,14 @@ const KATEGORI_OPTIONS = {
     'Belanja Modal',
     'Belanja Pegawai',
   ],
-  umum: [],
+  umum: [
+    'HPS',
+    'BAST',
+    'SIP',
+    'SIP Rumdin',
+    'SIP Kendin',
+    'BAST Permintaan Paspor',
+  ],
 }
 
 const SEARCH_DEBOUNCE_MS = 400
@@ -58,6 +65,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewName, setPreviewName] = useState('')
+  const [previewDoc, setPreviewDoc] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -213,6 +221,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
   const handlePreview = useCallback(async (doc) => {
     if (!doc.file) return
     setPreviewName(doc.nama || 'Dokumen')
+    setPreviewDoc(doc)
     setPreviewLoading(true)
     setShowPreviewModal(true)
     setPreviewUrl(null)
@@ -234,6 +243,7 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
       return null
     })
     setPreviewName('')
+    setPreviewDoc(null)
   }, [])
 
   const columns = [
@@ -574,9 +584,9 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
 
       {/* PDF Preview Modal */}
       {showPreviewModal && (
-        <div className="fixed inset-0 z-[9999]">
-          <div className="absolute inset-0 lg:left-[260px] flex items-center pt-80 justify-start pl-4 sm:pl-6">
-            <div className="relative w-[90%] max-w-7xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '75vh' }}>
+        <div className="fixed inset-0 z-[9999] bg-black/50">
+          <div className="absolute inset-0 lg:left-[260px] flex items-center justify-center p-3 sm:p-6">
+            <div className="relative w-full max-w-7xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 1.5rem)', maxHeight: '90vh' }}>
               <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-sidebar/10 flex items-center justify-center flex-shrink-0">
@@ -587,13 +597,25 @@ const ArsipPage = ({ kategori, judul, subjudul }) => {
                     <p className="text-xs text-cardLight">Preview Dokumen</p>
                   </div>
                 </div>
-                <button
-                  onClick={closePreview}
-                  className="p-2 rounded-xl hover:bg-gray-200 transition-colors flex-shrink-0"
-                  title="Tutup"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-darkest/60"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {canDownload && previewDoc?.file && (
+                    <button
+                      onClick={() => handleDownload(previewDoc)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sidebar hover:bg-darkest text-white text-xs sm:text-sm font-medium transition-colors"
+                      title="Download"
+                    >
+                      <Download size={14} />
+                      <span className="hidden sm:inline">Download</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={closePreview}
+                    className="p-2 rounded-xl hover:bg-gray-200 transition-colors"
+                    title="Tutup"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-darkest/60"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1 bg-gray-100 flex items-center justify-center overflow-hidden">

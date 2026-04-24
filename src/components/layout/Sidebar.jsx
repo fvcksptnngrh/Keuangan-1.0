@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { useDispatch } from 'react-redux'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
   Home,
   FolderOpen,
   Users,
-  LogOut,
   ChevronRight,
   ClipboardList,
   KeyRound,
@@ -14,7 +12,6 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import { canAccess } from '../../utils/roleGuard'
-import { logoutThunk } from '../../features/auth/authThunks'
 import Avatar from '../common/Avatar'
 
 const menuItems = [
@@ -82,8 +79,6 @@ const AccordionChildren = ({ isExpanded, children }) => {
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, role } = useAuth()
-  const dispatch = useDispatch()
-  const navigate = useNavigate()
   const location = useLocation()
   const [openMenu, setOpenMenu] = useState(() => getInitialOpenMenu(location.pathname))
 
@@ -99,10 +94,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const toggleMenu = (key) => {
     setOpenMenu((prev) => (prev === key ? null : key))
-  }
-
-  const handleLogout = () => {
-    dispatch(logoutThunk()).then(() => navigate('/login'))
   }
 
   const visibleMenus = menuItems.filter((item) => {
@@ -212,17 +203,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             )
           })}
         </nav>
-
-        {/* Logout */}
-        <div className="pl-4 pr-4 pb-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/60 hover:bg-white/10 hover:text-white transition-colors"
-          >
-            <LogOut size={20} />
-            <span className="text-sm font-medium">Logout</span>
-          </button>
-        </div>
+        <div className="pb-6" />
       </aside>
     </>
   )

@@ -9,6 +9,7 @@ import ArsipKepegawaian from '../pages/arsip/ArsipKepegawaian'
 import ArsipKeuangan from '../pages/arsip/ArsipKeuangan'
 import ArsipUmum from '../pages/arsip/ArsipUmum'
 import ManajemenAkun from '../pages/admin/ManajemenAkun'
+import TambahAkun from '../pages/admin/TambahAkun'
 import LogAktivitas from '../pages/admin/LogAktivitas'
 import UbahPassword from '../pages/akun/UbahPassword'
 import NotFound from '../pages/errors/NotFound'
@@ -50,6 +51,14 @@ const AppRouter = () => {
             element={
               <ProtectedRoute feature="admin">
                 <ManajemenAkun />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/akun/tambah"
+            element={
+              <ProtectedRoute feature="admin">
+                <TambahAkun />
               </ProtectedRoute>
             }
           />
