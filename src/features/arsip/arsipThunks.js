@@ -181,20 +181,27 @@ export const downloadArsipThunk = createAsyncThunk(
       let url = fileUrl
       if (url.startsWith('http')) {
         const u = new URL(url)
-        u.searchParams.delete('token')
-        url = u.pathname + (u.search ? u.search : '')
+        url = u.pathname + u.search
       }
       const axios = (await import('../../api/axiosInstance')).default
       const response = await axios.get(url, { responseType: 'blob' })
+
+      // Preserve extension from source path if fileName tidak punya ekstensi
+      let finalName = fileName || 'dokumen'
+      if (!/\.[a-z0-9]+$/i.test(finalName)) {
+        const extMatch = fileUrl.match(/\.([a-z0-9]+)(?:\?|$)/i)
+        if (extMatch) finalName = `${finalName}.${extMatch[1]}`
+      }
+
       const blobUrl = window.URL.createObjectURL(response.data)
       const link = document.createElement('a')
       link.href = blobUrl
-      link.download = fileName || 'dokumen.pdf'
+      link.download = finalName
       document.body.appendChild(link)
       link.click()
       link.remove()
       window.URL.revokeObjectURL(blobUrl)
-      return { fileName }
+      return { fileName: finalName }
     } catch (error) {
       return rejectWithValue('Gagal mengunduh file')
     }
